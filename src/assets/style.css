@@ -63,16 +63,17 @@ button:hover, button:active {
 }
 
 .viz-container{
-    height: 100%;
-    padding: 0 100px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: fit-content;
 }
 
 .graph {
-    width: 100%;
-    height: 100%;
+    flex-grow: 0;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: flex-start;
 }
 
 .tick line{
@@ -93,3 +94,31 @@ button:hover, button:active {
   .axis path {
       opacity: 0;
   }
+
+  .viz2-stacked-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; 
+    padding: 0px 5px;
+    min-width: 100px;
+    margin-left: -20px;
+  }
+
+  .viz2-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; 
+    padding: 0px 10px;
+    min-width: 120px; 
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    margin-right: 8px;
+}
