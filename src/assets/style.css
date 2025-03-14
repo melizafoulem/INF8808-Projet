@@ -35,6 +35,13 @@ h2 {
     font-weight: normal;
 }
 
+h3 {
+    color: #2A2B2E;
+    font-family: 'Roboto Slab', 'serif';
+    font-weight: normal;
+    padding-left: 20px;
+}
+
 svg {
     background-color: #ffffff;
 }
@@ -64,9 +71,10 @@ button:hover, button:active {
 
 .viz-container{
     display: flex;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 10px;
-    width: fit-content;
+    gap: 20px;
+    padding-left: 20px;
 }
 
 .graph {
@@ -100,8 +108,7 @@ button:hover, button:active {
     flex-direction: column;
     gap: 5px; 
     padding: 0px 5px;
-    min-width: 100px;
-    margin-left: -20px;
+    min-width: 200px;
   }
 
   .viz2-legend {
@@ -122,3 +129,20 @@ button:hover, button:active {
     height: 15px;
     margin-right: 8px;
 }
+
+#viz2-stacked-bar {
+    float: none;
+    padding: 0px 5px;
+}
+
+.viz2-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+#viz2-stacked-bar, #viz2-victory-container {
+    transition: opacity 0.5s ease-in-out;
+}
+
