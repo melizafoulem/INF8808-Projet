@@ -78,7 +78,7 @@ button:hover, button:active {
 }
 
 .graph {
-    flex-grow: 0;
+    flex-grow: 1;
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
@@ -146,3 +146,9 @@ button:hover, button:active {
     transition: opacity 0.5s ease-in-out;
 }
 
+.legend-container {
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
