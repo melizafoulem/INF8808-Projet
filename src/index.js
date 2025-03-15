@@ -5,7 +5,7 @@ import * as viz2 from './scripts/viz2-stacked-bar/viz.js';
 import * as preprocess from './scripts/preprocess.js';
 
 (function (d3) {
-  const margin = { top: 75, right: 200, bottom: 100, left: 80 };
+  const margin = { top: 40, right: 100, bottom: 100, left: 150 };
   const svgSize = { width: 1000, height: 600 };
   const graphSize = {
     width: svgSize.width - margin.right - margin.left,

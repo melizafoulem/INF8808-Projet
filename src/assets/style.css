@@ -71,7 +71,7 @@ button:hover, button:active {
 
 .viz-container{
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: flex-start;
     gap: 20px;
     padding-left: 20px;
@@ -148,4 +148,10 @@ button:hover, button:active {
     position: absolute;
     width: auto;
     white-space: nowrap;
+}
+
+#viz2 {
+    display: flex;
+    align-items: center;
+    align-self: center;
 }
