@@ -36,7 +36,7 @@ export function drawStackedBarChart(data, { g, x, y }) {
             hideTooltip();
         });
 
-    updateLegend("#viz2-legend", color, ["White Win %", "Draw %", "Black Win %"]);
+    updateLegend("#viz2-legend", color, ["Victoire des blancs %", "Égalité %", "Victoire des noirs %"]);
 }
 
 function showTooltip(event, value) {
@@ -102,7 +102,7 @@ export function drawVictoryStatusChart(data, { g, x, y }) {
             hideTooltip();
         });
 
-        updateLegend("#viz2-victory-legend", color, ["Checkmate %", "Resignation %", "Out of Time %", "Draw %"]);
+        updateLegend("#viz2-victory-legend", color, ["Échec et mat %", "Abandon %", "Manque de temps %", "Égalité %"]);
 }
 
 function updateLegend(containerId, color, labels) {
@@ -147,7 +147,10 @@ export function setClickHandler() {
           .transition().duration(500)
           .style('opacity', 1);
 
-        d3.select(this).text('Hide Victory Status Chart');
+        d3.select('#viz2-chart-title')
+          .text("Répartition des états de la victoire");
+
+        d3.select(this).text('Afficher la répartition des victoires');
       } else {
         d3.select('.bars-victory')
           .transition().duration(500)
@@ -168,8 +171,11 @@ export function setClickHandler() {
           .transition()
           .duration(500)
           .style('opacity', 1);
+        
+        d3.select('#viz2-chart-title')
+          .text("Répartition des victoires par ouverture");
 
-        d3.select(this).text('Show Victory Status Chart');
+        d3.select(this).text('Afficher les statistiques de l\'état de la victoire');
       }
     });
   }
@@ -182,6 +188,9 @@ export function setClickHandler() {
         .append('svg')
         .attr('width', svgSize.width)
         .attr('height', svgSize.height);
+
+        d3.select('#viz2-chart-title')
+        .text("Répartition des victoires par ouverture");
 
         const gAxis = svg.append('g')
         .attr('class', 'axis-group')

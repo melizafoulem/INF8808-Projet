@@ -152,6 +152,12 @@ button:hover, button:active {
 
 #viz2 {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    align-self: center;
+    width: 100%;
 }
+
+.chart-title {
+    margin-bottom: 10px;
+  text-align: center;
+  }

@@ -31,7 +31,7 @@ export function generateG (margin) {
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .attr('class', 'button-text')
-      .text('Show Victory Status Chart')
+      .text('Afficher les statistiques de l\'état de la victoire')
       .attr('font-size', '10px')
       .attr('fill', '#362023')
   }
