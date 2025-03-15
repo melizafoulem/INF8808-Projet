@@ -127,36 +127,26 @@ export function setClickHandler() {
       isShowingVictory = !isShowingVictory;
 
       if (isShowingVictory) {
-        d3.select('#viz2-stacked-bar-container')
-          .transition()
-          .duration(500)
+        d3.select('.bars-stacked')
+          .transition().duration(500)
           .style('opacity', 0)
-          .on('end', () => {
-            d3.select('#viz2-stacked-bar-container')
-              .style('display', 'none');
-          });
+          .on('end', () => d3.select('.bars-stacked').style('display', 'none'));
 
-        d3.select('#viz2-victory-container')
-          .style('display', 'flex')
-          .transition()
-          .duration(500)
+        d3.select('.bars-victory')
+          .style('display', 'block')
+          .transition().duration(500)
           .style('opacity', 1);
 
         d3.select(this).text('Hide Victory Status Chart');
       } else {
-        d3.select('#viz2-victory-container')
-          .transition()
-          .duration(500)
+        d3.select('.bars-victory')
+          .transition().duration(500)
           .style('opacity', 0)
-          .on('end', () => {
-            d3.select('#viz2-victory-container')
-              .style('display', 'none');
-          });
+          .on('end', () => d3.select('.bars-victory').style('display', 'none'));
 
-        d3.select('#viz2-stacked-bar-container')
-          .style('display', 'flex')
-          .transition()
-          .duration(500)
+        d3.select('.bars-stacked')
+          .style('display', 'block')
+          .transition().duration(500)
           .style('opacity', 1);
 
         d3.select(this).text('Show Victory Status Chart');
@@ -168,32 +158,52 @@ export function setClickHandler() {
         const topOpeningWinners = preprocess.getTopNOpeningsWinners(data, 10);
         const topOpeningResults = preprocess.getTopNOpeningsWithResults(data, 10);
 
-        const svgStacked = d3.select('#viz2-stacked-bar')
+        const svg = d3.select('#viz2-stacked-bar')
         .append('svg')
         .attr('width', svgSize.width)
         .attr('height', svgSize.height);
 
-        const gStacked = svgStacked.append('g')
+        const gAxis = svg.append('g')
+        .attr('class', 'axis-group')
+        .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+        const gBarsStacked = svg.append('g')
+        .attr('class', 'bars-stacked')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
-        const svgVictory = d3.select('#viz2-victory-status')
-        .append('svg')
-        .attr('width', svgSize.width)
-        .attr('height', svgSize.height);
-
-        const gVictory = svgVictory.append('g')
+        const gBarsVictory = svg.append('g')
+        .attr('class', 'bars-victory')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
-        const { x, y } = helper.drawAxes(topOpeningWinners, gStacked, graphSize);
+        const x = d3.scaleLinear()
+        .domain([0, 100])
+        .range([0, graphSize.width]);
 
-        drawStackedBarChart(topOpeningWinners, { g: gStacked, x, y });
+        const allNames = [
+            ...topOpeningWinners.map(d => d.name),
+            ...topOpeningResults.map(d => d.name)
+        ];
 
-        helper.drawAxes(topOpeningResults, gVictory, graphSize);
-        drawVictoryStatusChart(topOpeningResults, { g: gVictory, x, y });
+        const uniqueNames = [...new Set(allNames)];
 
-        d3.select('#viz2-victory-container')
-        .style('display', 'none')
-        .style('opacity', 0);
+        const y = d3.scaleBand()
+        .domain(uniqueNames)
+        .range([0, graphSize.height])
+        .padding(0.3);
+        
+        gAxis.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0, ${graphSize.height})`)
+        .call(d3.axisBottom(x).ticks(10).tickFormat(d => d + "%"));
+
+        gAxis.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(y));
+
+        drawStackedBarChart(topOpeningWinners, { g: gBarsStacked, x: x, y: y });
+        drawVictoryStatusChart(topOpeningResults, { g: gBarsVictory, x: x, y: y });
+
+        gBarsVictory.style("opacity", 0).style("display", "none");
 
         setClickHandler();
   }
