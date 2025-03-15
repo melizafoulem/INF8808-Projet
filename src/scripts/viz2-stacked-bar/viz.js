@@ -1,9 +1,11 @@
+import * as preprocess from '../preprocess.js';
+import * as helper from '../helper.js';
+
 export function drawStackedBarChart(data, { g, x, y }) {
     const color = d3.scaleOrdinal()
         .domain(["whiteWinPct", "drawPct", "blackWinPct"])
         .range(["#D3D3D3", "#808080", "#2E2E2E"]);
 
-    // Stack the data
     const stack = d3.stack()
         .keys(["whiteWinPct", "drawPct", "blackWinPct"])
         .order(d3.stackOrderNone)
@@ -11,7 +13,6 @@ export function drawStackedBarChart(data, { g, x, y }) {
 
     const series = stack(data);
 
-    // Draw stacked bars
     g.selectAll('.series')
         .data(series)
         .enter()
@@ -71,7 +72,6 @@ export function drawVictoryStatusChart(data, { g, x, y }) {
         .domain(["matePct", "resignPct", "outoftimePct", "drawPct"])
         .range(["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]); // Blue, Orange, Green, Red
 
-    // Stack the data
     const stack = d3.stack()
         .keys(["matePct", "resignPct", "outoftimePct", "drawPct"])
         .order(d3.stackOrderNone)
@@ -79,7 +79,6 @@ export function drawVictoryStatusChart(data, { g, x, y }) {
 
     const series = stack(data);
 
-    // Draw stacked bars
     g.selectAll('.series')
         .data(series)
         .enter()
@@ -121,4 +120,80 @@ function updateLegend(containerId, color, labels) {
 }
 
 
+export function setClickHandler() {
+    let isShowingVictory = false;
 
+    d3.select('#toggle-victory-chart').on('click', function() {
+      isShowingVictory = !isShowingVictory;
+
+      if (isShowingVictory) {
+        d3.select('#viz2-stacked-bar-container')
+          .transition()
+          .duration(500)
+          .style('opacity', 0)
+          .on('end', () => {
+            d3.select('#viz2-stacked-bar-container')
+              .style('display', 'none');
+          });
+
+        d3.select('#viz2-victory-container')
+          .style('display', 'flex')
+          .transition()
+          .duration(500)
+          .style('opacity', 1);
+
+        d3.select(this).text('Hide Victory Status Chart');
+      } else {
+        d3.select('#viz2-victory-container')
+          .transition()
+          .duration(500)
+          .style('opacity', 0)
+          .on('end', () => {
+            d3.select('#viz2-victory-container')
+              .style('display', 'none');
+          });
+
+        d3.select('#viz2-stacked-bar-container')
+          .style('display', 'flex')
+          .transition()
+          .duration(500)
+          .style('opacity', 1);
+
+        d3.select(this).text('Show Victory Status Chart');
+      }
+    });
+  }
+
+  export function drawViz(data, svgSize, margin, graphSize) {
+        const topOpeningWinners = preprocess.getTopNOpeningsWinners(data, 10);
+        const topOpeningResults = preprocess.getTopNOpeningsWithResults(data, 10);
+
+        const svgStacked = d3.select('#viz2-stacked-bar')
+        .append('svg')
+        .attr('width', svgSize.width)
+        .attr('height', svgSize.height);
+
+        const gStacked = svgStacked.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        const svgVictory = d3.select('#viz2-victory-status')
+        .append('svg')
+        .attr('width', svgSize.width)
+        .attr('height', svgSize.height);
+
+        const gVictory = svgVictory.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        const { x, y } = helper.drawAxes(topOpeningWinners, gStacked, graphSize);
+
+        drawStackedBarChart(topOpeningWinners, { g: gStacked, x, y });
+
+        helper.drawAxes(topOpeningResults, gVictory, graphSize);
+        drawVictoryStatusChart(topOpeningResults, { g: gVictory, x, y });
+
+        d3.select('#viz2-victory-container')
+        .style('display', 'none')
+        .style('opacity', 0);
+
+        setClickHandler();
+  }
