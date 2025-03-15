@@ -47,3 +47,22 @@ export function setCanvasSize (width, height) {
     .attr('width', width)
     .attr('height', height)
 }
+
+export function drawAxes(data, g, graphSize) {
+  const x = d3.scaleLinear().domain([0, 100]).range([0, graphSize.width]);
+  const y = d3.scaleBand()
+      .domain(data.map(d => d.name))
+      .range([0, graphSize.height])
+      .padding(0.3);
+
+  g.append("g")
+      .attr("class", "y-axis")
+      .call(d3.axisLeft(y));
+
+  g.append("g")
+      .attr("class", "x-axis")
+      .attr("transform", `translate(0,${graphSize.height})`)
+      .call(d3.axisBottom(x).ticks(10).tickFormat(d => d + "%"));
+
+  return { x, y };
+}
