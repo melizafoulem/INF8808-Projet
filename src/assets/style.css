@@ -78,10 +78,10 @@ button:hover, button:active {
 }
 
 .graph {
-    flex-grow: 1;
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
+    flex: 0 0 auto; 
 }
 
 .tick line{
@@ -111,14 +111,6 @@ button:hover, button:active {
     min-width: 200px;
   }
 
-  .viz2-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 5px; 
-    padding: 0px 10px;
-    min-width: 120px; 
-  }
-
   .legend-item {
     display: flex;
     align-items: center;
@@ -130,9 +122,14 @@ button:hover, button:active {
     margin-right: 8px;
 }
 
-#viz2-stacked-bar {
-    float: none;
-    padding: 0px 5px;
+#viz2-stacked-bar, #viz2-victory-container {
+    transition: opacity 0.5s ease-in-out;
+}
+
+.legend-container {
+    min-width: auto;
+    width: auto;
+    white-space: nowrap;
 }
 
 .viz2-container {
@@ -140,21 +137,15 @@ button:hover, button:active {
     flex-direction: row;
     align-items: flex-start;
     gap: 20px;
-}
-
-#viz2-stacked-bar, #viz2-victory-container {
-    transition: opacity 0.5s ease-in-out;
-}
-
-.legend-container {
-    min-width: 120px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-#viz2-victory-status {
-    float: none;
-    padding: 0px 5px;
   }
-  
+
+#viz2-legend-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+#viz2-legend, #viz2-victory-legend {
+    position: absolute;
+    width: auto;
+    white-space: nowrap;
+}

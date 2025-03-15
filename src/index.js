@@ -16,6 +16,4 @@ import * as preprocess from './scripts/preprocess.js';
 
     viz2.drawViz(data, svgSize, margin, graphSize);
   });
-
-  
 })(d3);

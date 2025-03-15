@@ -132,7 +132,17 @@ export function setClickHandler() {
           .style('opacity', 0)
           .on('end', () => d3.select('.bars-stacked').style('display', 'none'));
 
+        d3.select('#viz2-legend')
+            .transition()
+            .duration(0)
+            .style('opacity', 0);
+
         d3.select('.bars-victory')
+          .style('display', 'block')
+          .transition().duration(500)
+          .style('opacity', 1);
+
+        d3.select('#viz2-victory-legend')
           .style('display', 'block')
           .transition().duration(500)
           .style('opacity', 1);
@@ -144,9 +154,19 @@ export function setClickHandler() {
           .style('opacity', 0)
           .on('end', () => d3.select('.bars-victory').style('display', 'none'));
 
+        d3.select('#viz2-victory-legend')
+          .transition().duration(0)
+          .style('opacity', 0);
+
         d3.select('.bars-stacked')
           .style('display', 'block')
           .transition().duration(500)
+          .style('opacity', 1);
+
+        d3.select('#viz2-legend')
+          .style('display', 'block')
+          .transition()
+          .duration(500)
           .style('opacity', 1);
 
         d3.select(this).text('Show Victory Status Chart');
