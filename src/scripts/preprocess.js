@@ -84,3 +84,38 @@ export function getTopNOpeningsWithResults(data, n) {
 
     return sortedOpenings;
 }
+
+export function getNOpeningVariations(data, n) {
+
+    const openings = data.reduce((acc, d) => {
+        const parts = d.opening_name.split(/[:|]/);
+        const name = parts[0].trim().replace(/#\d+$/, '');
+        const variation = parts[1] ? parts[1].trim() : null;
+
+        if (!acc[name]) {
+            acc[name] = { count: 0, variations: {} };
+        }
+        
+        acc[name].count += 1;
+        
+        if (variation) {
+            const cleanedVariation = variation.replace(/\bvariation\b/gi, '').trim();
+            
+            if (!acc[name].variations[cleanedVariation]) {
+                acc[name].variations[cleanedVariation] = 0;
+            }
+            acc[name].variations[cleanedVariation] += 1;
+        }
+        return acc;
+    }, {});
+
+    const sortedOpenings = Object.entries(openings)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, n);
+
+    return sortedOpenings.reduce((acc, [name, details]) => {
+        acc[name] = details;
+        return acc;
+    }, {});
+}
+
