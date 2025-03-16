@@ -84,3 +84,72 @@ export function getTopNOpeningsWithResults(data, n) {
 
     return sortedOpenings;
 }
+
+// Returns thhe n most popular opening with their win percentage per elo
+export function getWinRateByOpeningAcrossEloRanges(data, n) {
+    // Trouver le nombre de parties par ouverture
+    const openingCounts = {};
+    data.forEach(d => {
+        const name = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
+        openingCounts[name] = (openingCounts[name] || 0) + 1;
+    });
+
+    // Trouver les n ouvertures les plus jouées
+    const topOpenings = new Set(
+        Object.entries(openingCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, n)
+            .map(([name]) => name)
+    );
+
+    // Filtrer les données pour ne garder que les parties des ouvertures les plus jouées
+    const filteredData = data.filter(d =>
+        topOpenings.has(d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, ''))
+    );
+
+    // Trouver le Elo min et max
+    const elos = filteredData.flatMap(d => [(d.white_rating + d.black_rating) / 2]);
+    const minElo = Math.floor(Math.min(...elos) / 100) * 100;
+    const maxElo = Math.ceil(Math.max(...elos) / 100) * 100;
+
+    const results = {};
+
+    // Parcourir chaque tranche de 100 Elo
+    for (let elo = minElo; elo < maxElo; elo += 100) {
+        const rangeKey = `${elo}-${elo + 99}`;
+        results[rangeKey] = {};
+
+        const rangeFilteredData = filteredData.filter(d => {
+            const averageRating = (d.white_rating + d.black_rating) / 2;
+            return averageRating >= elo && averageRating <= elo + 99;
+        });
+
+        rangeFilteredData.forEach(d => {
+            const name = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
+
+            if (!results[rangeKey][name]) {
+                results[rangeKey][name] = { total: 0, whiteWins: 0, blackWins: 0, draws: 0 };
+            }
+
+            results[rangeKey][name].total++;
+            if (d.winner === "white") results[rangeKey][name].whiteWins++;
+            if (d.winner === "black") results[rangeKey][name].blackWins++;
+            if (d.winner === "draw") results[rangeKey][name].draws++;
+        });
+    }
+
+    // Convertir en tableau structuré
+    return Object.entries(results).map(([range, openings]) => ({
+        range,
+        openings: Array.from(topOpenings).map(name => {
+            const stats = openings[name] || { total: 0, whiteWins: 0, blackWins: 0, draws: 0 };
+            return {
+                name,
+                total: stats.total,
+                whiteWinPct: stats.total ? (stats.whiteWins / stats.total) * 100 : 0,
+                blackWinPct: stats.total ? (stats.blackWins / stats.total) * 100 : 0,
+                drawPct: stats.total ? (stats.draws / stats.total) * 100 : 0
+            };
+        })
+    }));
+}
