@@ -25,7 +25,7 @@ export function drawViz(data, svgSize) {
     .sort((a, b) => b.value - a.value);
 
   const pack = d3.pack()
-    .size([1700, 1300])
+    .size([1300, 1300])
     .padding(3);
 
   pack(root);
@@ -87,7 +87,7 @@ export function drawViz(data, svgSize) {
 
   const legendGroup = svg.append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(1500, 50)`)
+    .attr("transform", `translate(1250, 50)`);
 
   const legendItems = legendGroup.selectAll(".legend-item")
     .data(topLevelNodes)
@@ -107,4 +107,44 @@ export function drawViz(data, svgSize) {
     .attr("y", 15)
     .text(d => d.data.name)
     .style("font-size", "14px");
+
+  const tooltip = d3.select("body")
+    .append("div")
+    .style("position", "absolute")
+    .style("padding", "5px 10px")
+    .style("background", "rgba(0, 0, 0, 0.7)")
+    .style("color", "#fff")
+    .style("border-radius", "5px")
+    .style("pointer-events", "none")
+    .style("opacity", 0);
+
+  node.filter(d => d.depth === 2)
+    .select("circle")
+    .on("mouseover", (event, d) => {
+      const parentChildrenSum = d.parent.children.reduce((acc, c) => acc + c.value, 0);
+      const fraction = (d.value / parentChildrenSum) * 100;
+      tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 1);
+      tooltip
+        .html(
+          "<strong>Opening:</strong> " + d.parent.data.name + "<br/>" +
+          "<strong>Variation:</strong> " + d.data.name + "<br/>" +
+          "<strong>Percentage:</strong> " + fraction.toFixed(2) + "%"
+        )
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 10) + "px");
+    })
+    .on("mousemove", event => {
+      tooltip
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 10) + "px");
+    })
+    .on("mouseout", () => {
+      tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 0);
+    });
 }
