@@ -31,15 +31,8 @@ export function drawViz(data, svgSize) {
   pack(root);
 
   let svg = d3.select('#viz4');
-  if (svg.empty()) {
-    svg = d3.select('body')
-      .append('svg')
-      .attr('id', 'viz4')
-      .attr('width', 2000)
-      .attr('height', 2000);
-  } else {
-    svg.attr('width', 2000).attr('height', 1300);
-  }
+  svg.attr('width', 1600).attr('height', 1300);
+  
 
   svg.selectAll("*").remove();
 
