@@ -2,6 +2,7 @@
 
 import * as helper from './scripts/helper.js';
 import * as preprocess from './scripts/preprocess.js';
+import * as viz1 from './scripts/viz1-heatmap/viz.js';
 import * as viz2 from './scripts/viz2-stacked-bar/viz.js';
 import * as viz3 from './scripts/viz3-line-chart/viz.js';
 import * as viz4 from './scripts/viz4-circle-packing-diagram/viz.js';
@@ -16,7 +17,7 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
   };
 
   d3.csv('./games.csv', d3.autoType).then(function (data) {
-
+    viz1.drawViz(data, svgSize, margin, graphSize);
     viz2.drawViz(data, svgSize, margin, graphSize);
     viz3.drawViz(data, svgSize, margin, graphSize);
     viz4.drawViz(data, svgSize, margin, graphSize);
