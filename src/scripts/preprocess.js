@@ -189,3 +189,42 @@ export function getNOpeningVariations(data, n) {
     }, {});
 }
 
+export function getOpeningStats (data) {
+    const openings = {};
+
+    data.forEach(d => {
+        const name = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
+        const ply = d.opening_ply;
+        const turns = d.turns;
+
+        if (!openings[name]) {
+            openings[name] = {
+                total: 0,
+                totalTurns: 0,
+                totalPly: 0,
+                whiteWins: 0,
+                blackWins: 0,
+                draws: 0
+            };
+        }
+
+        openings[name].total++;
+        openings[name].totalTurns += turns;
+        openings[name].totalPly += ply;
+
+        if (d.winner === "white") openings[name].whiteWins++;
+        else if (d.winner === "black") openings[name].blackWins++;
+        else if (d.winner === "draw") openings[name].draws++;
+    });
+
+    return Object.entries(openings).map(([name, stats]) => ({
+        name,
+        averageTurns: stats.total ? stats.totalTurns / stats.total : 0,
+        averagePly: stats.total ? stats.totalPly / stats.total : 0,
+        whiteWinPct: stats.total ? (stats.whiteWins / stats.total) * 100 : 0,
+        blackWinPct: stats.total ? (stats.blackWins / stats.total) * 100 : 0,
+        drawPct: stats.total ? (stats.draws / stats.total) * 100 : 0
+    })).sort((a, b) => b.total - a.total);
+}
+
+
