@@ -4,7 +4,7 @@ import * as helper from '../helper.js';
 export function drawStackedBarChart(data, { g, x, y }) {
     const color = d3.scaleOrdinal()
         .domain(["whiteWinPct", "drawPct", "blackWinPct"])
-        .range(["#D3D3D3", "#808080", "#2E2E2E"]);
+        .range(["#D3D3D3", "#4287f5", "#2E2E2E"]);
 
     const stack = d3.stack()
         .keys(["whiteWinPct", "drawPct", "blackWinPct"])
