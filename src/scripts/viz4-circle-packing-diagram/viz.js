@@ -337,11 +337,12 @@ export class CirclePackingVisualization {
    */
   createTooltip() {
     // Remove any existing tooltip
-    d3.select("body").select(".tooltip").remove();
+    d3.select("body").select("#viz4-tooltip").remove();
     
     // Create new tooltip
     d3.select("body")
       .append("div")
+      .attr("id", "viz4-tooltip")
       .attr("class", "tooltip")
       .style("position", "absolute")
       .style("padding", "10px")
