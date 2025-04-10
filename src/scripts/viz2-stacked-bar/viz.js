@@ -58,18 +58,25 @@ export class StackedBarVisualization extends VisualizationBase {
     this.initialize();
     
     // Preprocess data for both chart types
-    const topOpeningWinners = preprocess.getTopNOpeningsWinners(data, this.options.numOpenings);
-    const topOpeningResults = preprocess.getTopNOpeningsWithResults(data, this.options.numOpenings);
+    const topOpeningWinners = preprocess.getTopNOpeningsWinners(data, this.options.numOpenings).sort((a, b) => b.whiteWinPct - a.whiteWinPct);
+    const topOpeningResults = preprocess.getTopNOpeningsWithResults(data, this.options.numOpenings).sort((a, b) => b.matePct - a.matePct);
     
     // Set initial chart title
     this.setTitle("Répartition des victoires par ouverture");
     
     // Create scales and axes
-    const { xScale, yScale } = this.createScales(topOpeningWinners, topOpeningResults);
+    const { xScale, yScale: yScaleWins } = this.createScales(topOpeningWinners);
+    const yScaleVictory = d3.scaleBand()
+      .domain(topOpeningResults.map(d => d.name))
+      .range([0, this.graphSize.height])
+      .padding(0.3);
+
+    this.yScaleWins = yScaleWins;
+    this.yScaleVictory = yScaleVictory;
     
     // Draw both chart types
-    this.drawWinsByColorChart(topOpeningWinners, xScale, yScale);
-    this.drawVictoryStatusChart(topOpeningResults, xScale, yScale);
+    this.drawWinsByColorChart(topOpeningWinners, xScale, yScaleWins);
+    this.drawVictoryStatusChart(topOpeningResults, xScale, yScaleVictory);
     
     // Setup toggle button
     this.setupToggleButton();
@@ -87,29 +94,21 @@ export class StackedBarVisualization extends VisualizationBase {
    * @param {Array} victoryData - Data for victory status
    * @returns {Object} - Scales for the charts
    */
-  createScales(winnerData, victoryData) {
-    // Create X scale (percentage)
+  createScales(winnerData) {
     const xScale = d3.scaleLinear()
       .domain([0, 100])
       .range([0, this.graphSize.width]);
-    
-    // Get unique opening names from both datasets
-    const allNames = [
-      ...winnerData.map(d => d.name),
-      ...victoryData.map(d => d.name)
-    ];
-    const uniqueNames = [...new Set(allNames)];
-    
-    // Create Y scale (openings)
+  
+    const names = winnerData.map(d => d.name)
+  
     const yScale = d3.scaleBand()
-      .domain(uniqueNames)
+      .domain(names)
       .range([0, this.graphSize.height])
       .padding(0.3);
-    
-    // Create axes
+  
     this.createXAxis(xScale, 'Pourcentage (%)');
     this.createYAxis(yScale, 'Ouverture');
-    
+  
     return { xScale, yScale };
   }
   
@@ -340,7 +339,9 @@ export class StackedBarVisualization extends VisualizationBase {
       this.setTitle("Répartition des états de la victoire");
       d3.select('#toggle-victory-chart')
         .text('Afficher la répartition des victoires');
-    
+      
+      this.graphGroup.selectAll('.y-axis').remove();
+      this.createYAxis(this.yScaleVictory, 'Ouverture');
     } else {
       // Switch to wins by color chart
       this.victoryStatusGroup.transition().duration(500)
@@ -365,6 +366,9 @@ export class StackedBarVisualization extends VisualizationBase {
       this.setTitle("Répartition des victoires par ouverture");
       d3.select('#toggle-victory-chart')
         .text('Afficher les statistiques de l\'état de la victoire');
+
+      this.graphGroup.selectAll('.y-axis').remove();
+      this.createYAxis(this.yScaleWins, 'Ouverture');
     }    
   }
   
