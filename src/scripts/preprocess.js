@@ -412,4 +412,12 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
     };
 }
 
+export function getEloRange(data) {
+    const elos = data.flatMap(d => [d.white_rating, d.black_rating]);
+    const minElo = Math.floor(Math.min(...elos) / 100) * 100;
+    const maxElo = Math.ceil(Math.max(...elos) / 100) * 100;
+    console.log(`min Elo ${minElo}, max Elo ${maxElo}`)
+    return { "min": minElo, "max": maxElo }
+}
+
 

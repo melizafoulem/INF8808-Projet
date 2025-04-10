@@ -58,17 +58,58 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
     // Populate opening filter
     const openings = preprocess.getAllOpeningNames(data);
     populateDropdown('#opening-filter', openings, 'all', 'Toutes');
-    
+
     // Populate time control filter based on available time controls
     const timeControls = preprocess.getTimeControlOptions(data);
     populateDropdown('#time-control-filter', timeControls, 'all', 'Tous');
-    
+
     // Elo ranges could be generated based on data min/max
-    // This is a placeholder for now
-    // const eloRanges = generateEloRanges(data);
-    // populateDropdown('#elo-filter', eloRanges);
+    initializeEloFilter(data)
   }
-  
+
+  // Initialize elo range filter
+  function initializeEloFilter (data) {
+    const eloRanges = preprocess.getEloRange(data);
+    const step = 100;
+
+    const minSelect = document.getElementById('elo-min');
+    const maxSelect = document.getElementById('elo-max');
+
+    // Génère les options par pas de 100
+    function populateEloSelect(select, min, max) {
+      for (let i = min; i <= max; i += step) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        select.appendChild(option);
+      }
+    }
+
+    populateEloSelect(minSelect, eloRanges.min, eloRanges.max - step);
+    populateEloSelect(maxSelect, eloRanges.min + step, eloRanges.max);
+
+    // Met valeur initiale
+    minSelect.value = eloRanges.min;
+    maxSelect.value = eloRanges.max;
+
+    // Empêche de sélectionner un max inférieur au min
+    minSelect.addEventListener('change', () => {
+      const minVal = parseInt(minSelect.value);
+      const maxVal = parseInt(maxSelect.value);
+      if (minVal >= maxVal) {
+        maxSelect.value = Math.min(minVal + step, eloRanges.max);
+      }
+    });
+
+    maxSelect.addEventListener('change', () => {
+      const minVal = parseInt(minSelect.value);
+      const maxVal = parseInt(maxSelect.value);
+      if (maxVal <= minVal) {
+        minSelect.value = Math.max(maxVal - step, eloRanges.min);
+      }
+    });
+  }
+
   // Helper function to populate dropdown with options
   function populateDropdown(selector, options, defaultValue, defaultText) {
     const dropdown = d3.select(selector);
