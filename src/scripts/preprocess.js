@@ -408,6 +408,23 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
         }
     }
 
+    const groupedByElo = {};
+    for (const d of heatmapData) {
+        if (!groupedByElo[d.eloRange]) {
+            groupedByElo[d.eloRange] = [];
+        }
+        groupedByElo[d.eloRange].push(d);
+    }
+
+    for (const eloRange in groupedByElo) {
+        const group = groupedByElo[eloRange];
+        const total = d3.sum(group, d => d.count);
+        for (const d of group) {
+            d.relativeCount = total > 0 ? (d.count / total) * 100 : 0;
+        }
+    }
+    console.log(heatmapData)
+
     return {
         data: heatmapData,
         openings: topOpenings,

@@ -81,9 +81,6 @@ export class HeatmapVisualization extends VisualizationBase {
       return aStart - bStart;
     });
     
-    // Find maximum count for color scale
-    const maxCount = d3.max(heatmapData, d => d.count);
-    
     // Create scales
     const xScale = d3.scaleBand()
       .domain(eloRanges)
@@ -97,7 +94,7 @@ export class HeatmapVisualization extends VisualizationBase {
     
     const colorScale = d3.scaleSequential()
       .interpolator(this.options.colorScheme)
-      .domain([0, maxCount]);
+      .domain([0, 100]);
     
     // Create axes
     this.createXAxis(xScale, 'Plage Elo')
@@ -118,7 +115,7 @@ export class HeatmapVisualization extends VisualizationBase {
       .attr('y', d => yScale(d.opening))
       .attr('width', xScale.bandwidth())
       .attr('height', yScale.bandwidth())
-      .style('fill', d => d.count === 0 ? '#f5f5f5' : colorScale(d.count))
+      .style('fill', d => d.relativeCount === 0 ? '#f5f5f5' : colorScale(d.relativeCount))
       .style('stroke', '#e0e0e0')
       .style('stroke-width', 1)
       .style('cursor', 'pointer')
@@ -142,7 +139,7 @@ export class HeatmapVisualization extends VisualizationBase {
       });
     
     // Create color legend
-    this.createColorLegend(colorScale, maxCount);
+    this.createColorLegend(colorScale, 100);
   }
   
   /**
@@ -155,6 +152,7 @@ export class HeatmapVisualization extends VisualizationBase {
     const totalWhiteBlack = d.whiteCount + d.blackCount;
     const whitePercent = totalWhiteBlack > 0 ? formatPercent(d.whiteCount / totalWhiteBlack * 100) : 0;
     const blackPercent = totalWhiteBlack > 0 ? formatPercent(d.blackCount / totalWhiteBlack * 100) : 0;
+    const rel = d.relativeCount.toFixed(2);
     
     return `
       <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${d.opening}</div>
@@ -163,6 +161,10 @@ export class HeatmapVisualization extends VisualizationBase {
         <tr>
           <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Parties totales:</td>
           <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${d.count}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee;">% des parties:</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${rel}</td>
         </tr>
         <tr>
           <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Parties blancs:</td>
