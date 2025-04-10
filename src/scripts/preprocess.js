@@ -1,11 +1,14 @@
 // Return a list of all opening names without the variations
-export function getAllOpeningNames (data) {
+export function getAllOpeningNames(data) {
     const cleanNames = data.map(d => {
-        return d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
+      return d.opening_name
+        .split(/[:|]/)[0]
+        .replace(/#\d+$/, '')
+        .trim();
     });
-
-    return [...new Set(cleanNames)];
-}
+  
+    return [...new Set(cleanNames)].sort((a, b) => a.localeCompare(b));
+  }
 
 // Returns the n most popular openings in the dataset
 export function getTopNOpenings (data, n) {

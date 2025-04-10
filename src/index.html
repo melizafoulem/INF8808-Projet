@@ -34,10 +34,14 @@
           <section class="filters-panel">
             <div class="filter-container">
               <div class="filter">
-                <label for="opening-filter">Ouverture</label>
-                <select id="opening-filter">
-                  <option value="all">Toutes</option>
-                </select>
+                <label>Ouverture</label>
+                <div class="dropdown-multiselect">
+                  <button id="dropdown-button">Choisir des ouvertures ▾</button>
+                  <div id="dropdown-menu" class="dropdown-menu">
+                    <label><input type="checkbox" value="all" id="select-all" checked> Toutes</label>
+                    <div id="checkbox-options"></div>
+                  </div>
+                </div>
               </div>
               
               <div class="filter">
@@ -50,29 +54,36 @@
               </div>              
               
               <div class="filter">
-                <label for="color-filter">Couleur des pièces</label>
-                <select id="color-filter">
-                  <option value="both">Blanc, Noir</option>
-                  <option value="white">Blanc</option>
-                  <option value="black">Noir</option>
-                </select>
+                <label>Couleur des pièces</label>
+                <div class="dropdown-multiselect" id="color-filter-wrapper">
+                  <button id="color-dropdown-button">Blanc et Noir ▾</button>
+                  <div id="color-dropdown-menu" class="dropdown-menu">
+                    <label><input type="checkbox" value="white" class="color-checkbox" checked> Blanc</label>
+                    <label><input type="checkbox" value="black" class="color-checkbox" checked> Noir</label>
+                  </div>
+                </div>
               </div>
               
               <div class="filter">
-                <label for="game-type-filter">Type de partie</label>
-                <select id="game-type-filter">
-                  <option value="all">Classée, Non classée</option>
-                  <option value="rated">Classée</option>
-                  <option value="casual">Non classée</option>
-                </select>
+                <label>Type de partie</label>
+                <div class="dropdown-multiselect" id="game-type-filter-wrapper">
+                  <button id="game-type-dropdown-button">Classée et Non classée ▾</button>
+                  <div id="game-type-dropdown-menu" class="dropdown-menu">
+                    <label><input type="checkbox" value="rated" class="game-type-checkbox" checked> Classée</label>
+                    <label><input type="checkbox" value="casual" class="game-type-checkbox" checked> Non classée</label>
+                  </div>
+                </div>
               </div>
               
               <div class="filter">
-                <label for="time-control-filter">Contrôle du temps</label>
-                <select id="time-control-filter">
-                  <option value="all">Blitz, Partie rapide, Partie longue</option>
-                </select>
+                <label>Contrôle du temps</label>
+                <div class="dropdown-multiselect" id="time-control-filter-wrapper">
+                  <button id="time-control-dropdown-button">Blitz, Partie rapide, Partie longue ▾</button>
+                  <div id="time-control-dropdown-menu" class="dropdown-menu">
+                  </div>
+                </div>
               </div>
+              
               
               <button id="filter-button" class="primary-button">Filtrer</button>
             </div>

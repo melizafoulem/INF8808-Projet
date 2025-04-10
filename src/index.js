@@ -55,19 +55,142 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
 
   // Initialize filter dropdowns with data-driven options
   function initializeFilters(data) {
-    // Populate opening filter
-    const openings = preprocess.getAllOpeningNames(data);
-    populateDropdown('#opening-filter', openings, 'all', 'Toutes');
-
-    // Populate time control filter based on available time controls
-    const timeControls = preprocess.getTimeControlOptions(data);
-    populateDropdown('#time-control-filter', timeControls, 'all', 'Tous');
-
-    // Elo ranges could be generated based on data min/max
+    initializeOpeningFilter(data)
     initializeEloFilter(data)
+
+    initializeCheckboxFilter({
+      buttonId: 'color-dropdown-button',
+      menuId: 'color-dropdown-menu',
+      wrapperId: 'color-filter-wrapper',
+      options: ['white', 'black'],
+      valueLabels: { white: 'Blanc', black: 'Noir' }
+    });
+  
+    initializeCheckboxFilter({
+      buttonId: 'game-type-dropdown-button',
+      menuId: 'game-type-dropdown-menu',
+      wrapperId: 'game-type-filter-wrapper',
+      options: ['rated', 'casual'],
+      valueLabels: { rated: 'Classée', casual: 'Non classée' }
+    });
+  
+    initializeCheckboxFilter({
+      buttonId: 'time-control-dropdown-button',
+      menuId: 'time-control-dropdown-menu',
+      wrapperId: 'time-control-filter-wrapper',
+      options: preprocess.getTimeControlOptions(data)
+    });
   }
 
-  // Initialize elo range filter
+  function initializeCheckboxFilter({ buttonId, menuId, wrapperId, options, valueLabels }) {
+    const button = document.getElementById(buttonId);
+    const menu = document.getElementById(menuId);
+    const wrapper = document.getElementById(wrapperId);
+  
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest(`#${wrapperId}`)) {
+        menu.style.display = 'none';
+      }
+    });
+  
+    button.addEventListener('click', () => {
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    });
+  
+    menu.innerHTML = '';
+    options.forEach(option => {
+      const label = document.createElement('label');
+      label.innerHTML = `
+        <input type="checkbox" value="${option}" class="${menuId}-checkbox" checked> 
+        ${valueLabels?.[option] ?? option}
+      `;
+      menu.appendChild(label);
+    });
+  
+    const checkboxes = () => document.querySelectorAll(`.${menuId}-checkbox`);
+  
+    function updateButtonText() {
+      const selected = Array.from(checkboxes())
+        .filter(cb => cb.checked)
+        .map(cb => valueLabels?.[cb.value] ?? cb.value);
+  
+      if (selected.length === options.length) {
+        button.textContent = selected.join(', ') + ' ▾';
+      } else if (selected.length > 0) {
+        button.textContent = selected.join(', ') + ' ▾';
+      } else {
+        button.textContent = 'Aucune sélection ▾';
+      }
+    }
+  
+    menu.addEventListener('change', updateButtonText);
+    updateButtonText();
+  }  
+
+  function initializeOpeningFilter (data) {
+    const openings = preprocess.getAllOpeningNames(data);
+
+    const dropdownButton = document.getElementById('dropdown-button');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    const checkboxContainer = document.getElementById('checkbox-options');
+    const selectAllCheckbox = document.getElementById('select-all');
+
+    dropdownButton.addEventListener('click', () => {
+      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown-multiselect')) {
+        dropdownMenu.style.display = 'none';
+      }
+    });
+
+    function populateCheckboxes(openings) {
+      checkboxContainer.innerHTML = '';
+      openings.forEach(opening => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" value="${opening}" class="opening-checkbox" checked> ${opening}`;
+        checkboxContainer.appendChild(label);
+      });
+    }
+
+    populateCheckboxes(openings);
+
+    selectAllCheckbox.addEventListener('change', () => {
+      const checked = selectAllCheckbox.checked;
+      document.querySelectorAll('.opening-checkbox').forEach(cb => {
+        cb.checked = checked;
+      });
+    });
+
+    checkboxContainer.addEventListener('change', () => {
+      const checkboxes = document.querySelectorAll('.opening-checkbox');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      selectAllCheckbox.checked = allChecked;
+    });
+
+    function getSelectedOpenings() {
+      const checked = document.querySelectorAll('.opening-checkbox:checked');
+      return Array.from(checked).map(cb => cb.value);
+    }
+
+    function updateButtonText() {
+      const selected = getSelectedOpenings();
+      if (selectAllCheckbox.checked) {
+        dropdownButton.textContent = "Toutes les ouvertures ▾";
+      } else if (selected.length > 0) {
+        dropdownButton.textContent = `${selected.length} ouverture(s) sélectionnée(s) ▾`;
+      } else {
+        dropdownButton.textContent = "Choisir des ouvertures ▾";
+      }
+    }
+    
+    checkboxContainer.addEventListener('change', updateButtonText);
+    selectAllCheckbox.addEventListener('change', updateButtonText);
+    
+    updateButtonText();
+  }
+
   function initializeEloFilter (data) {
     const eloRanges = preprocess.getEloRange(data);
     const step = 100;
@@ -75,7 +198,6 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
     const minSelect = document.getElementById('elo-min');
     const maxSelect = document.getElementById('elo-max');
 
-    // Génère les options par pas de 100
     function populateEloSelect(select, min, max) {
       for (let i = min; i <= max; i += step) {
         const option = document.createElement('option');
@@ -88,11 +210,9 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
     populateEloSelect(minSelect, eloRanges.min, eloRanges.max - step);
     populateEloSelect(maxSelect, eloRanges.min + step, eloRanges.max);
 
-    // Met valeur initiale
     minSelect.value = eloRanges.min;
     maxSelect.value = eloRanges.max;
 
-    // Empêche de sélectionner un max inférieur au min
     minSelect.addEventListener('change', () => {
       const minVal = parseInt(minSelect.value);
       const maxVal = parseInt(maxSelect.value);
@@ -108,25 +228,6 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
         minSelect.value = Math.max(maxVal - step, eloRanges.min);
       }
     });
-  }
-
-  // Helper function to populate dropdown with options
-  function populateDropdown(selector, options, defaultValue, defaultText) {
-    const dropdown = d3.select(selector);
-    
-    // Keep the default option
-    const defaultOption = dropdown.select('option');
-    
-    // Clear existing options (except the default)
-    dropdown.selectAll('option:not(:first-child)').remove();
-    
-    // Add new options
-    dropdown.selectAll('option:not(:first-child)')
-      .data(options)
-      .enter()
-      .append('option')
-      .attr('value', d => d)
-      .text(d => d);
   }
 
   // Draw all visualizations based on current state
