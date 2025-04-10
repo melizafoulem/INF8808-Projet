@@ -205,6 +205,8 @@
     padding: 25px;
     display: flex;
     flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
   
   .viz-description {
@@ -230,16 +232,24 @@
   
   .graph {
     width: 100%;
+    height: auto;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    overflow: visible;
   }
   
   svg {
     max-width: 100%;
     height: auto;
   }
+
+  svg.visualization {
+    display: block;
+    height: auto;
+    width: 100%;
+  }
+  
   
   /* Tooltip */
   .tooltip {

@@ -43,9 +43,10 @@ export class VisualizationBase {
       // Create SVG element
       this.svg = d3.select(`#${this.containerId}`)
         .append('svg')
-        .attr('width', this.options.width)
-        .attr('height', this.options.height)
-        .attr('class', 'visualization');
+        .attr('class', 'visualization')
+        .attr('viewBox', `0 0 ${this.options.width} ${this.options.height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
       
       // Create main group element with margin transform
       this.graphGroup = this.svg.append('g')
