@@ -415,26 +415,44 @@ export function drawViz(data, svgSize, margin, graphSize) {
   heatmap.draw(data);
 }
 
-export function drawVizComparison(data, svgSize, margin, graphSize) {
-  const colorScale = d3.scaleSequential()
-    .interpolator(d3.interpolateYlOrRd)
-    .domain([0, 100]);
+export function drawSixHeatmaps(data, svgSize, margin, graphSize) {
+  const container = d3.select('#viz1-six-heatmaps');
+  container.selectAll('*').remove();
 
-  // Rated heatmap
-  const heatmapRated = new HeatmapVisualization('viz1-rated', {
-    width: svgSize.width,
-    height: svgSize.height,
-    margin: margin
-  });
-  heatmapRated.filterState.rated = 'rated';
-  heatmapRated.draw(data);
+  const configs = [
+    { id: 'rated', label: 'Parties classées', filter: { rated: 'rated' } },
+    { id: 'unrated', label: 'Parties non classées', filter: { rated: 'casual' } },
+    { id: 'bullet', label: 'Cadence Bullet', filter: { timeControl: 'Bullet' } },
+    { id: 'blitz', label: 'Cadence Blitz', filter: { timeControl: 'Blitz' } },
+    { id: 'rapid', label: 'Cadence Rapide', filter: { timeControl: 'Rapide' } },
+    { id: 'classical', label: 'Cadence Classique', filter: { timeControl: 'Classique' } },
+  ];
 
-  // Unrated heatmap
-  const heatmapUnrated = new HeatmapVisualization('viz1-unrated', {
-    width: svgSize.width,
-    height: svgSize.height,
-    margin: margin
+  configs.forEach(config => {
+    const block = container.append('div')
+      .attr('class', 'heatmap-block');
+
+    block.append('h4')
+      .attr('class', 'chart-title')
+      .text(config.label);
+
+    const divId = `heatmap-${config.id}`;
+    block.append('div').attr('id', divId);
+
+    const heatmap = new HeatmapVisualization(divId, {
+      width: svgSize.width,
+      height: svgSize.height,
+      margin: margin,
+    });
+
+    if (config.filter.rated) {
+      heatmap.filterState.rated = config.filter.rated;
+    }
+    if (config.filter.timeControl) {
+      heatmap.filterState.timeControl = config.filter.timeControl;
+    }
+
+    heatmap.draw(data);
   });
-  heatmapUnrated.filterState.rated = 'casual';
-  heatmapUnrated.draw(data);
 }
+

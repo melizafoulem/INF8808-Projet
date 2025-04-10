@@ -400,17 +400,16 @@
     white-space: nowrap;
   }
 
-  .dual-heatmap-container {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap;
+  .heatmap-grid-6 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 10px;
   }
   
-  #viz1-rated-container,
-  #viz1-unrated-container {
-    flex: 1 1 500px;
-    max-width: 600px;
+  .heatmap-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
   

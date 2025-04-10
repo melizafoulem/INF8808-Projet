@@ -236,7 +236,7 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
     const filteredData = applyFilters(data);
     
     // Draw each visualization with filtered data
-    viz1.drawVizComparison(filteredData, svgSize, margin, graphSize);
+    viz1.drawSixHeatmaps(filteredData, svgSize, margin, graphSize);
     viz2.drawViz(filteredData, svgSize, margin, graphSize);
     viz3.drawViz(filteredData, svgSize, margin, graphSize);
     viz4.drawViz(filteredData, svgSize, margin, graphSize);
