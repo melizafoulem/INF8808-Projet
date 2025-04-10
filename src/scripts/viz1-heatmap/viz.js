@@ -63,9 +63,9 @@ export class HeatmapVisualization extends VisualizationBase {
     this.drawHeatmap(filteredData);
     
     // Setup filter controls - only on first draw
-    if (!document.querySelector('#viz1-filter-container')) {
-      this.setupFilters(data);
-    }
+    // if (!document.querySelector('#viz1-filter-container')) {
+    //   this.setupFilters(data);
+    // }
   }
   
   /**
@@ -413,4 +413,28 @@ export function drawViz(data, svgSize, margin, graphSize) {
   });
   
   heatmap.draw(data);
+}
+
+export function drawVizComparison(data, svgSize, margin, graphSize) {
+  const colorScale = d3.scaleSequential()
+    .interpolator(d3.interpolateYlOrRd)
+    .domain([0, 100]);
+
+  // Rated heatmap
+  const heatmapRated = new HeatmapVisualization('viz1-rated', {
+    width: svgSize.width,
+    height: svgSize.height,
+    margin: margin
+  });
+  heatmapRated.filterState.rated = 'rated';
+  heatmapRated.draw(data);
+
+  // Unrated heatmap
+  const heatmapUnrated = new HeatmapVisualization('viz1-unrated', {
+    width: svgSize.width,
+    height: svgSize.height,
+    margin: margin
+  });
+  heatmapUnrated.filterState.rated = 'casual';
+  heatmapUnrated.draw(data);
 }

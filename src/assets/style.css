@@ -197,6 +197,10 @@
     gap: 30px;
     margin-bottom: 40px;
   }
+
+  #viz1-container {
+    grid-column: span 2;
+  }
   
   .viz-card {
     background-color: white;
@@ -395,4 +399,18 @@
     max-width: 100%;
     white-space: nowrap;
   }
+
+  .dual-heatmap-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  
+  #viz1-rated-container,
+  #viz1-unrated-container {
+    flex: 1 1 500px;
+    max-width: 600px;
+  }
+  
   
