@@ -45,7 +45,8 @@ export class StackedBarVisualization extends VisualizationBase {
       
     this.victoryStatusGroup = this.graphGroup.append('g')
       .attr('class', 'victory-status-group')
-      .style('opacity', 0);
+      .style('opacity', 0)
+      .style('display', 'none');
   }
   
   /**
@@ -318,8 +319,11 @@ export class StackedBarVisualization extends VisualizationBase {
     if (this.isShowingVictory) {
       // Switch to victory status chart
       this.winsByColorGroup.transition().duration(500)
-        .style('opacity', 0);
-      
+        .style('opacity', 0)
+        .on('end', () => {
+          this.winsByColorGroup.style('display', 'none');
+        });
+    
       this.winLegend.transition().duration(500)
         .style('opacity', 0)
         .on('end', () => {
@@ -328,20 +332,23 @@ export class StackedBarVisualization extends VisualizationBase {
             .transition().duration(500)
             .style('opacity', 1);
         });
-      
+    
       this.victoryStatusGroup.style('display', 'block')
         .transition().duration(500)
         .style('opacity', 1);
       
       this.setTitle("Répartition des états de la victoire");
-      
       d3.select('#toggle-victory-chart')
         .text('Afficher la répartition des victoires');
+    
     } else {
       // Switch to wins by color chart
       this.victoryStatusGroup.transition().duration(500)
-        .style('opacity', 0);
-      
+        .style('opacity', 0)
+        .on('end', () => {
+          this.victoryStatusGroup.style('display', 'none');
+        });
+    
       this.victoryLegend.transition().duration(500)
         .style('opacity', 0)
         .on('end', () => {
@@ -350,16 +357,15 @@ export class StackedBarVisualization extends VisualizationBase {
             .transition().duration(500)
             .style('opacity', 1);
         });
-      
+    
       this.winsByColorGroup.style('display', 'block')
         .transition().duration(500)
         .style('opacity', 1);
-      
+    
       this.setTitle("Répartition des victoires par ouverture");
-      
       d3.select('#toggle-victory-chart')
         .text('Afficher les statistiques de l\'état de la victoire');
-    }
+    }    
   }
   
   /**
