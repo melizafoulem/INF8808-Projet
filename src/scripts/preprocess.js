@@ -301,10 +301,6 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
         };
     });
     
-    // Debug pour vérifier les valeurs de rated
-    console.log('Filter type:', filterType);
-    console.log('Example rated values:', processedData.slice(0, 5).map(d => d.rated));
-    
     const openingCounts = {};
     processedData.forEach(d => {
         const effectiveTimeControl = d.time_control || d.estimated_time_control;
@@ -334,7 +330,6 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
     }
     
     if (!topOpenings || topOpenings.length === 0) {
-        console.log('No openings found with the current filters');
         return {
             data: [],
             openings: [],
@@ -356,7 +351,6 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
     });
     
     if (filteredData.length === 0) {
-        console.log('No data found with the current filters');
         return {
             data: [],
             openings: [],
@@ -420,7 +414,6 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
             d.relativeCount = total > 0 ? (d.count / total) * 100 : 0;
         }
     }
-    console.log(heatmapData)
 
     return {
         data: heatmapData,
@@ -433,7 +426,6 @@ export function getEloRange(data) {
     const elos = data.flatMap(d => [d.white_rating, d.black_rating]);
     const minElo = Math.floor(Math.min(...elos) / 100) * 100;
     const maxElo = Math.ceil(Math.max(...elos) / 100) * 100;
-    console.log(`min Elo ${minElo}, max Elo ${maxElo}`)
     return { "min": minElo, "max": maxElo }
 }
 
