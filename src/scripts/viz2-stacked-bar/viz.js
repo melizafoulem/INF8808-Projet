@@ -34,6 +34,8 @@ export class StackedBarVisualization extends VisualizationBase {
     // Data for pagination
     this.fullWinnerData = [];
     this.currentPage = 0;
+    this.fullResultsData = [];
+    this.currentVictoryPage = 0;
     this.itemsPerPage = this.options.numOpenings || 10;
   }
   
@@ -69,6 +71,9 @@ export class StackedBarVisualization extends VisualizationBase {
     // Set pagination data
     this.fullWinnerData = topOpeningWinners;
     this.currentPage = 0;
+    this.fullResultsData = topOpeningResults
+    this.currentVictoryPage = 0;
+
     this.updatePaginatedData();
     
     // Set initial chart title
@@ -87,7 +92,7 @@ export class StackedBarVisualization extends VisualizationBase {
     
     // Draw both chart types
     this.drawWinsByColorChart(topOpeningWinners, xScale, yScaleWins);
-    this.drawVictoryStatusChart(topOpeningResults, xScale, yScaleVictory);
+    this.updateVictoryPaginatedData();
     
     // Setup toggle button
     this.setupToggleButton();
@@ -356,6 +361,9 @@ export class StackedBarVisualization extends VisualizationBase {
       
       this.graphGroup.selectAll('.y-axis').remove();
       this.createYAxis(this.yScaleVictory, 'Ouverture');
+
+      d3.select("#viz2-pagination").style("display", "none");
+      d3.select("#viz2-victory-pagination").style("display", "flex");
     } else {
       // Switch to wins by color chart
       this.victoryStatusGroup.transition().duration(500)
@@ -383,6 +391,9 @@ export class StackedBarVisualization extends VisualizationBase {
 
       this.graphGroup.selectAll('.y-axis').remove();
       this.createYAxis(this.yScaleWins, 'Ouverture');
+
+      d3.select("#viz2-pagination").style("display", "flex");
+      d3.select("#viz2-victory-pagination").style("display", "none");
     }    
   }
 
@@ -390,6 +401,12 @@ export class StackedBarVisualization extends VisualizationBase {
     const start = this.currentPage * this.itemsPerPage;
     const end = start + this.itemsPerPage;
     return this.fullWinnerData.slice(start, end);
+  }
+
+  getCurrentVictoryPageData() {
+    const start = this.currentVictoryPage * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.fullResultsData.slice(start, end);
   }
 
   updatePaginatedData() {
@@ -414,9 +431,38 @@ export class StackedBarVisualization extends VisualizationBase {
     d3.select("#next-page").attr("disabled", this.currentPage >= maxPage ? true : null);
   }
 
+  updateVictoryPaginatedData() {
+    const paginatedData = this.getCurrentVictoryPageData();
+  
+    this.graphGroup.selectAll('.y-axis').remove();
+  
+    const xScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([0, this.graphSize.width]);
+  
+    const yScale = d3.scaleBand()
+      .domain(paginatedData.map(d => d.name))
+      .range([0, this.graphSize.height])
+      .padding(0.3);
+  
+    this.yScaleVictory = yScale;
+  
+    this.victoryStatusGroup.selectAll('*').remove();
+    this.drawVictoryStatusChart(paginatedData, xScale, yScale);
+    this.createYAxis(this.yScaleVictory, 'Ouverture');
+    this.updateVictoryPageIndicator();
+  
+    d3.select("#prev-victory-page").attr("disabled", this.currentVictoryPage === 0 ? true : null);
+    const maxPage = Math.floor(this.fullResultsData.length / this.itemsPerPage);
+    d3.select("#next-victory-page").attr("disabled", this.currentVictoryPage >= maxPage ? true : null);
+  }
+  
+
   createPagination() {
     const container = d3.select(`#${this.containerId}`);
-    const navContainer = container.append("div").attr("id", "viz2-pagination");
+    const navContainer = container.append("div")
+      .attr("id", "viz2-pagination")
+      .style("display", "flex");
 
     navContainer.append("button")
       .attr("id", "prev-page")
@@ -426,7 +472,7 @@ export class StackedBarVisualization extends VisualizationBase {
 
     navContainer.append("span")
       .attr("id", "page-indicator")
-      .style("margin", "0 12px") // un petit espace
+      .style("margin", "0 12px")
       .style("align-self", "center");
 
     navContainer.append("button")
@@ -436,12 +482,41 @@ export class StackedBarVisualization extends VisualizationBase {
       .on("click", () => this.goToNextPage());
 
     this.updatePageIndicator();
+
+    const victoryNavContainer = container.append("div")
+      .attr("id", "viz2-victory-pagination")
+      .style("display", "none");
+
+    victoryNavContainer.append("button")
+      .attr("id", "prev-victory-page")
+      .attr("class", "primary-button")
+      .text("← Précédent")
+      .on("click", () => this.goToPreviousVictoryPage());
+
+    victoryNavContainer.append("span")
+      .attr("id", "victory-page-indicator")
+      .style("margin", "0 12px")
+      .style("align-self", "center");
+
+    victoryNavContainer.append("button")
+      .attr("id", "next-victory-page")
+      .attr("class", "primary-button")
+      .text("Suivant →")
+      .on("click", () => this.goToNextVictoryPage());
+
+    this.updateVictoryPageIndicator();
   }
 
   updatePageIndicator() {
     const totalPages = Math.ceil(this.fullWinnerData.length / this.itemsPerPage);
     const currentPageDisplay = this.currentPage + 1;
     d3.select("#page-indicator").text(`Page ${currentPageDisplay} sur ${totalPages}`);
+  }
+
+  updateVictoryPageIndicator() {
+    const totalPages = Math.ceil(this.fullResultsData.length / this.itemsPerPage);
+    const currentPageDisplay = this.currentVictoryPage + 1;
+    d3.select("#victory-page-indicator").text(`Page ${currentPageDisplay} sur ${totalPages}`);
   }  
 
   goToNextPage() {
@@ -458,6 +533,22 @@ export class StackedBarVisualization extends VisualizationBase {
       this.updatePaginatedData();
     }
   }
+
+  goToNextVictoryPage() {
+    const maxPage = Math.floor(this.fullResultsData.length / this.itemsPerPage);
+    if (this.currentVictoryPage < maxPage) {
+      this.currentVictoryPage++;
+      this.updateVictoryPaginatedData();
+    }
+  }
+  
+  goToPreviousVictoryPage() {
+    if (this.currentVictoryPage > 0) {
+      this.currentVictoryPage--;
+      this.updateVictoryPaginatedData();
+    }
+  }
+  
   
   /**
    * Update the visualization with new data
