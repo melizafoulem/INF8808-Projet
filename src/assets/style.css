@@ -406,12 +406,12 @@
     gap: 10px;
   }
 
-  #viz2-pagination, #viz2-victory-pagination {
+  #viz2-pagination, #viz2-victory-pagination, #viz3-pagination {
     display: flex;
     justify-content: center;
   }
 
-  #viz2-pagination > *, #viz2-victory-pagination > * {
+  #viz2-pagination > *, #viz2-victory-pagination > *, #viz3-pagination > * {
     margin: 0 15px;
   }
   

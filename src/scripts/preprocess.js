@@ -95,7 +95,6 @@ export function getWinRateByOpeningAcrossEloRanges(data, n) {
     const topOpenings = new Set(
         Object.entries(openingCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, n)
             .map(([name]) => name)
     );
 
