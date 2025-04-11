@@ -30,6 +30,11 @@ export class StackedBarVisualization extends VisualizationBase {
     this.victoryStatusGroup = null;
     this.winLegend = null;
     this.victoryLegend = null;
+
+    // Data for pagination
+    this.fullWinnerData = [];
+    this.currentPage = 0;
+    this.itemsPerPage = this.options.numOpenings || 10;
   }
   
   /**
@@ -60,12 +65,18 @@ export class StackedBarVisualization extends VisualizationBase {
     // Preprocess data for both chart types
     const topOpeningWinners = preprocess.getTopNOpeningsWinners(data, this.options.numOpenings).sort((a, b) => b.whiteWinPct - a.whiteWinPct);
     const topOpeningResults = preprocess.getTopNOpeningsWithResults(data, this.options.numOpenings).sort((a, b) => b.matePct - a.matePct);
+
+    // Set pagination data
+    this.fullWinnerData = topOpeningWinners;
+    this.currentPage = 0;
+    this.updatePaginatedData();
     
     // Set initial chart title
     this.setTitle("Répartition des victoires par ouverture");
     
     // Create scales and axes
-    const { xScale, yScale: yScaleWins } = this.createScales(topOpeningWinners);
+    const currentPageData = this.getCurrentPageData();
+    const { xScale, yScale: yScaleWins } = this.createScales(currentPageData);
     const yScaleVictory = d3.scaleBand()
       .domain(topOpeningResults.map(d => d.name))
       .range([0, this.graphSize.height])
@@ -83,6 +94,9 @@ export class StackedBarVisualization extends VisualizationBase {
     
     // Create legends
     this.createLegends();
+
+    // Create pagination
+    this.createPagination();
     
     // Initially hide victory status chart
     this.victoryStatusGroup.style('opacity', 0);
@@ -370,6 +384,79 @@ export class StackedBarVisualization extends VisualizationBase {
       this.graphGroup.selectAll('.y-axis').remove();
       this.createYAxis(this.yScaleWins, 'Ouverture');
     }    
+  }
+
+  getCurrentPageData() {
+    const start = this.currentPage * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.fullWinnerData.slice(start, end);
+  }
+
+  updatePaginatedData() {
+    const paginatedData = this.getCurrentPageData();
+
+    this.graphGroup.selectAll('.y-axis').remove();
+  
+    const xScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([0, this.graphSize.width]);
+  
+    const { yScale } = this.createScales(paginatedData);
+  
+    this.yScaleWins = yScale;
+  
+    this.winsByColorGroup.selectAll('*').remove();
+    this.drawWinsByColorChart(paginatedData, xScale, yScale);
+    this.updatePageIndicator();
+
+    d3.select("#prev-page").attr("disabled", this.currentPage === 0 ? true : null);
+    const maxPage = Math.floor(this.fullWinnerData.length / this.itemsPerPage);
+    d3.select("#next-page").attr("disabled", this.currentPage >= maxPage ? true : null);
+  }
+
+  createPagination() {
+    const container = d3.select(`#${this.containerId}`);
+    const navContainer = container.append("div").attr("id", "viz2-pagination");
+
+    navContainer.append("button")
+      .attr("id", "prev-page")
+      .attr("class", "primary-button")
+      .text("← Précédent")
+      .on("click", () => this.goToPreviousPage());
+
+    navContainer.append("span")
+      .attr("id", "page-indicator")
+      .style("margin", "0 12px") // un petit espace
+      .style("align-self", "center");
+
+    navContainer.append("button")
+      .attr("id", "next-page")
+      .attr("class", "primary-button")
+      .text("Suivant →")
+      .on("click", () => this.goToNextPage());
+
+    this.updatePageIndicator();
+  }
+
+  updatePageIndicator() {
+    const totalPages = Math.ceil(this.fullWinnerData.length / this.itemsPerPage);
+    const currentPageDisplay = this.currentPage + 1;
+    d3.select("#page-indicator").text(`Page ${currentPageDisplay} sur ${totalPages}`);
+  }  
+
+  goToNextPage() {
+    const maxPage = Math.floor(this.fullWinnerData.length / this.itemsPerPage);
+    if (this.currentPage < maxPage) {
+      this.currentPage++;
+      this.updatePaginatedData();
+    }
+  }
+
+  goToPreviousPage() {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.updatePaginatedData();
+    }
   }
   
   /**

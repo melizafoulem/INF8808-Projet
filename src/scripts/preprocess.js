@@ -47,8 +47,7 @@ export function getTopNOpeningsWinners(data, n) {
             blackWinPct: (stats.blackWins / stats.total) * 100,
             drawPct: (stats.draws / stats.total) * 100
         }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, n);
+        .sort((a, b) => b.total - a.total);
 
     return sortedOpenings;
 }
@@ -80,8 +79,7 @@ export function getTopNOpeningsWithResults(data, n) {
             outoftimePct: (stats.outoftime / stats.total) * 100,
             drawPct: (stats.draw / stats.total) * 100
         }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, n);
+        .sort((a, b) => b.total - a.total);
 
     return sortedOpenings;
 }

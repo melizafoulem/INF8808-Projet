@@ -405,11 +405,13 @@
     grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
     gap: 10px;
   }
-  
-  .heatmap-block {
+
+  #viz2-pagination {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
   }
-  
+
+  #viz2-pagination > * {
+    margin: 0 15px;
+  }
   

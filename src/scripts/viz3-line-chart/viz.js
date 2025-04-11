@@ -18,7 +18,7 @@ export class LineChartVisualization extends VisualizationBase {
     // Line chart specific options
     this.options = {
       ...this.options,
-      numOpenings: 5,
+      numOpenings: 10,
       colorScheme: d3.schemeCategory10,
       lineWidth: 2,
       pointRadius: 4,
