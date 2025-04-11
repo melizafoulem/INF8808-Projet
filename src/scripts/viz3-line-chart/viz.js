@@ -18,7 +18,7 @@ export class LineChartVisualization extends VisualizationBase {
     // Line chart specific options
     this.options = {
       ...this.options,
-      numOpenings: 10,
+      numOpenings: 5,
       colorScheme: d3.schemeCategory10,
       lineWidth: 2,
       pointRadius: 4,
@@ -89,7 +89,7 @@ export class LineChartVisualization extends VisualizationBase {
         return {
           range: d.range,
           eloValue: parseInt(d.range.split('-')[0]), // Use start of range for x value
-          whiteWinPct: found ? found.whiteWinPct : 0,
+          whiteWinPct: found && found.total >= 3 ? found.whiteWinPct : null,
           blackWinPct: found ? found.blackWinPct : 0,
           drawPct: found ? found.drawPct : 0,
           total: found ? found.total : 0
@@ -170,6 +170,7 @@ export class LineChartVisualization extends VisualizationBase {
   drawLines(data, xScale, yScale, colorScale) {
     // Create line generator
     const line = d3.line()
+      .defined(d => d.whiteWinPct !== null)
       .x(d => xScale(d.eloValue))
       .y(d => yScale(d.whiteWinPct))
       .curve(d3.curveMonotoneX); // Smooth curve
@@ -209,7 +210,7 @@ export class LineChartVisualization extends VisualizationBase {
       
       // Draw points
       this.graphGroup.selectAll(`.point-${className}`)
-        .data(opening.values)
+        .data(opening.values.filter(d => d.whiteWinPct !== null))
         .enter()
         .append('circle')
         .attr('class', `point point-${className}`)
@@ -255,6 +256,7 @@ export class LineChartVisualization extends VisualizationBase {
    */
   createTooltipContent(opening, dataPoint) {
     return `
+      ${dataPoint.total < 10 ? '<div style="color:red; margin-bottom: 5px;">⚠ Donnée peu significative (peu de parties)</div>' : ''}
       <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${opening.name}</div>
       <div style="margin-bottom: 8px; font-size: 11px; color: #777;">${dataPoint.range}</div>
       <table style="width: 100%; border-collapse: collapse;">
