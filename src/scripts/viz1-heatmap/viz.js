@@ -25,8 +25,8 @@ export class HeatmapVisualization extends VisualizationBase {
     
     // Filter state
     this.filterState = {
-      rated: 'all',
-      timeControl: 'all',
+      rated: null,
+      timeControl: null,
       color: 'both',
       sortBy: 'popularity'
     };
@@ -44,8 +44,8 @@ export class HeatmapVisualization extends VisualizationBase {
     const filteredData = preprocess.getOpeningUsageByElo(
       data, 
       this.options.numOpenings,
-      this.filterState.rated === 'rated' ? true : this.filterState.rated === 'casual' ? false : null,
-      this.filterState.timeControl === 'all' ? null : this.filterState.timeControl,
+      this.filterState.rated,
+      this.filterState.timeControl,
       this.filterState.color,
       this.filterState.sortBy
     );

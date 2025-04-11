@@ -288,7 +288,7 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
       if (colors.includes('black') && (black_rating < min || black_rating > max)) return false;
 
       // Game type filter (rated/casual)
-      const type = d.rated ? 'rated' : 'casual';
+      const type = d.rated.toLowerCase() === 'true' ? 'rated' : 'casual';
       if (!state.filters.gameType.includes(type)) return false;
       
       // Time control filter
