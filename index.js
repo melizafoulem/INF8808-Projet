@@ -1,12 +1,12 @@
 'use strict'
 
-import * as helper from './scripts/helper.js';
-import * as preprocess from './scripts/preprocess.js';
-import * as viz1 from './scripts/viz1-heatmap/viz.js';
-import * as viz2 from './scripts/viz2-stacked-bar/viz.js';
-import * as viz3 from './scripts/viz3-line-chart/viz.js';
-import * as viz4 from './scripts/viz4-circle-packing-diagram/viz.js';
-import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
+import * as helper from './src/scripts/helper.js';
+import * as preprocess from './src/scripts/preprocess.js';
+import * as viz1 from './src/scripts/viz1-heatmap/viz.js';
+import * as viz2 from './src/scripts/viz2-stacked-bar/viz.js';
+import * as viz3 from './src/scripts/viz3-line-chart/viz.js';
+import * as viz4 from './src/scripts/viz4-circle-packing-diagram/viz.js';
+import * as viz5 from './src/scripts/viz5-scatter-plot/viz.js';
 
 (function (d3) {
   // Configuration for all visualizations
