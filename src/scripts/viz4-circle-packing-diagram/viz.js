@@ -22,6 +22,8 @@ export class CirclePackingVisualization {
       variationInflationFactor: 2.0, // Factor to inflate variation sizes for better visibility
       ...options
     };
+
+    this.createTooltip();
   }
   
   /**
@@ -29,57 +31,112 @@ export class CirclePackingVisualization {
    * @param {Array} data - Chess games dataset
    */
   draw(data) {
-    // Clear existing visualization
-    this.svg.selectAll("*").remove();
-    
-    // Set dimensions
-    this.svg
-      .attr('width', this.options.width)
-      .attr('height', this.options.height);
-      
-    // Preprocess data for circle packing
+    const container = d3.select(`#${this.svgId}`);
+    container.selectAll("*").remove(); // Clear previous content
+  
     const topOpenings = preprocess.getNOpeningVariations(data, this.options.topOpenings);
     if (!topOpenings || Object.keys(topOpenings).length === 0) {
       this.showNoDataMessage();
       return;
     }
-    
-    // Create hierarchy data
-    const hierarchyData = this.createHierarchyData(topOpenings);
-    
-    // Create hierarchy and pack layout
-    const root = d3.hierarchy(hierarchyData)
-      .sum(d => d.count)
-      .sort((a, b) => b.value - a.value);
-    
-    const pack = d3.pack()
-      .size([this.options.width - 300, this.options.height - 50])
-      .padding(this.options.padding);
-    
-    pack(root);
-    
-    // Create color scale
-    const topLevelNodes = root.children || [];
+  
+    // Split into separate families
+    const openingFamilies = Object.entries(topOpenings).map(([name, details]) => {
+      const children = Object.entries(details.variations).map(([varName, varCount]) => ({
+        name: varName || "Principal",
+        count: varCount * this.options.variationInflationFactor
+      }));
+  
+      if (children.length === 0) {
+        children.push({
+          name: "Principal",
+          count: details.count * 0.8
+        });
+      }
+  
+      return { name, children };
+    });
+  
+    // Define color scale
     const colorScale = d3.scaleOrdinal()
-      .domain(topLevelNodes.map(d => d.data.name))
+      .domain(openingFamilies.map(d => d.name))
       .range(d3.schemeCategory10);
-    
-    // Create main group element
-    const g = this.svg.append("g")
-      .attr("transform", "translate(40, 40)");
-    
-    // Get nodes (excluding root)
-    const nodes = root.descendants().filter(d => d.depth > 0);
-    
-    // Draw circles
-    this.drawCircles(g, nodes, colorScale);
-    
-    // Create legend
-    this.createLegend(topLevelNodes, colorScale);
-    
-    // Create tooltip
-    this.createTooltip();
+  
+    // Create grid container
+    const grid = container.append("div")
+      .attr("class", "circle-multiple-grid");
+  
+    openingFamilies.forEach((family, i) => {
+      const chart = grid.append("div").attr("class", "circle-multiple-chart");
+  
+      chart.append("h4")
+        .attr("class", "chart-title")
+        .text(family.name);
+  
+      const svg = chart.append("svg")
+        .attr("width", 280)
+        .attr("height", 280);
+  
+      this.drawCirclePack(family, svg, colorScale(family.name));
+    });
   }
+
+  drawCirclePack(familyData, svg, color) {
+  const root = d3.hierarchy(familyData)
+    .sum(d => d.count)
+    .sort((a, b) => b.value - a.value);
+
+  const pack = d3.pack()
+    .size([280, 280])
+    .padding(this.options.padding);
+
+  const nodes = pack(root).descendants().slice(1); // exclude root
+
+  const g = svg.append("g")
+    .attr("transform", "translate(0,0)");
+
+  const node = g.selectAll("g")
+    .data(nodes)
+    .enter()
+    .append("g")
+    .attr("transform", d => `translate(${d.x},${d.y})`);
+
+  node.append("circle")
+    .attr("r", d => d.r)
+    .attr("fill", d => d.depth === 1 ? color : d3.color(color).brighter(1.5))
+    .attr("stroke", d => d.depth === 1 ? "#fff" : "none")
+    .attr("stroke-width", 1.5);
+
+  // Add visible labels if the radius is big enough
+  node.filter(d => d.r > 12)
+    .append("text")
+    .attr("dy", "0.3em")
+    .attr("text-anchor", "middle")
+    .attr("font-size", d => Math.min(2 * d.r, 12))
+    .attr("fill", "#000")
+    .text(d => d.data.name)
+    .each(function(d) {
+      const textElement = d3.select(this);
+      let text = textElement.text();
+      let textLength = this.getComputedTextLength();
+      const maxWidth = 2 * d.r * 0.8;
+
+      while (textLength > maxWidth && text.length > 3) {
+        text = text.slice(0, text.length - 4) + '...';
+        textElement.text(text);
+        textLength = this.getComputedTextLength();
+      }
+
+    if (textLength > maxWidth) {
+      textElement.text('');
+    }
+  });
+
+  // Keep the title tooltip for hover
+  this.addCircleInteractions(node);
+}
+
+  
   
   /**
    * Create hierarchical data structure for circle packing
@@ -181,21 +238,56 @@ export class CirclePackingVisualization {
    */
   addCircleInteractions(node) {
     const tooltip = d3.select("body").select(".tooltip");
-    
-    // Add hover effect for variants
+  
+    // FAMILY NODES (depth === 1) — now showing correct family tooltip
+    node.filter(d => d.depth === 1)
+      .style("cursor", "pointer")
+      .on("mouseover", (event, d) => {
+        d3.select(event.currentTarget).select("circle")
+          .attr("stroke", "#333")
+          .attr("stroke-width", 3);
+  
+        const parentTotal = d.value;
+        const percentage = 100;
+  
+        tooltip.transition().duration(200).style("opacity", 1);
+        tooltip.html(`
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${d.data.name}</div>
+          <div style="margin-bottom: 8px; font-size: 11px; color: #777;">Variante: Principal</div>
+          <div style="font-size: 14px; margin-bottom: 5px;">
+            <span style="font-weight: bold;">${percentage.toFixed(1)}%</span> des parties
+          </div>
+          <div style="font-size: 12px; color: #666;">
+            (${Math.round(d.value / this.options.variationInflationFactor)} parties sur ${Math.round(parentTotal / this.options.variationInflationFactor)})
+          </div>
+        `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 10) + "px");
+      })
+      .on("mousemove", (event) => {
+        tooltip
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 10) + "px");
+      })
+      .on("mouseout", (event) => {
+        d3.select(event.currentTarget).select("circle")
+          .attr("stroke", "#fff")
+          .attr("stroke-width", 1.5);
+  
+        tooltip.transition().duration(500).style("opacity", 0);
+      });
+  
+    // VARIANT NODES (depth === 2) — now showing correct variant tooltip
     node.filter(d => d.depth === 2)
       .style("cursor", "pointer")
       .on("mouseover", (event, d) => {
-        // Highlight circle
         d3.select(event.currentTarget).select("circle")
           .attr("stroke", "#333")
           .attr("stroke-width", 2);
-        
-        // Calculate percentage of parent
+  
         const parentTotal = d.parent.value;
         const percentage = (d.value / parentTotal) * 100;
-        
-        // Show tooltip
+  
         tooltip.transition().duration(200).style("opacity", 1);
         tooltip.html(`
           <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${d.parent.data.name}</div>
@@ -216,55 +308,15 @@ export class CirclePackingVisualization {
           .style("top", (event.pageY - 10) + "px");
       })
       .on("mouseout", (event) => {
-        // Remove highlight
         d3.select(event.currentTarget).select("circle")
           .attr("stroke", "none");
-        
-        // Hide tooltip
-        tooltip.transition().duration(500).style("opacity", 0);
-      });
-    
-    // Add hover effect for opening groups
-    node.filter(d => d.depth === 1)
-      .style("cursor", "pointer")
-      .on("mouseover", (event, d) => {
-        // Highlight circle
-        d3.select(event.currentTarget).select("circle")
-          .attr("stroke", "#333")
-          .attr("stroke-width", 3);
-        
-        // Calculate total games
-        const totalGames = Math.round(d.value / (this.options.variationInflationFactor * 0.8));
-        
-        // Show tooltip
-        tooltip.transition().duration(200).style("opacity", 1);
-        tooltip.html(`
-          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${d.data.name}</div>
-          <div style="font-size: 14px; margin-bottom: 5px;">
-            <span style="font-weight: bold;">${totalGames}</span> parties au total
-          </div>
-          <div style="font-size: 12px; color: #666;">
-            ${d.children.length} variante${d.children.length > 1 ? 's' : ''}
-          </div>
-        `)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px");
-      })
-      .on("mousemove", (event) => {
-        tooltip
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px");
-      })
-      .on("mouseout", (event) => {
-        // Remove highlight
-        d3.select(event.currentTarget).select("circle")
-          .attr("stroke", "#fff")
-          .attr("stroke-width", 1.5);
-        
-        // Hide tooltip
+  
         tooltip.transition().duration(500).style("opacity", 0);
       });
   }
+  
+  
+  
   
   /**
    * Create legend for openings
