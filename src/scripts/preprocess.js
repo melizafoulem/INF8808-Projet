@@ -258,7 +258,7 @@ export function getTimeControlOptions(data) {
 }
 
 // De plus, modifions la fonction getOpeningUsageByElo pour utiliser cette estimation
-export function getOpeningUsageByElo(data, n, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
+export function getOpeningUsageByElo(data, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
     // Normaliser les données pour garantir que rated est un booléen
     const processedData = data.map(d => {
         // Convertir rated en booléen (peut être une chaîne "true"/"false" dans le CSV)
@@ -291,12 +291,10 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
     if (sortBy === 'popularity') {
         topOpenings = Object.entries(openingCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, n)
             .map(([name]) => name);
     } else if (sortBy === 'name') {
         topOpenings = Object.entries(openingCounts)
             .sort((a, b) => a[0].localeCompare(b[0]))
-            .slice(0, n)
             .map(([name]) => name);
     }
     
