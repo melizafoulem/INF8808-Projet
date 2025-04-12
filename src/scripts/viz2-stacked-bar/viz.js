@@ -426,9 +426,9 @@ export class StackedBarVisualization extends VisualizationBase {
     this.drawWinsByColorChart(paginatedData, xScale, yScale);
     this.updatePageIndicator();
 
-    d3.select("#prev-page").attr("disabled", this.currentPage === 0 ? true : null);
+    d3.select("#viz2-prev-page").attr("disabled", this.currentPage === 0 ? true : null).classed("disabled", this.currentPage === 0);
     const maxPage = Math.floor(this.fullWinnerData.length / this.itemsPerPage);
-    d3.select("#next-page").attr("disabled", this.currentPage >= maxPage ? true : null);
+    d3.select("#viz2-next-page").attr("disabled", this.currentPage >= maxPage ? true : null).classed("disabled", this.currentPage >= maxPage);
   }
 
   updateVictoryPaginatedData() {
@@ -452,9 +452,9 @@ export class StackedBarVisualization extends VisualizationBase {
     this.createYAxis(this.yScaleVictory, 'Ouverture');
     this.updateVictoryPageIndicator();
   
-    d3.select("#prev-victory-page").attr("disabled", this.currentVictoryPage === 0 ? true : null);
+    d3.select("#prev-victory-page").attr("disabled", this.currentVictoryPage === 0 ? true : null).classed("disabled", this.currentVictoryPage === 0);
     const maxPage = Math.floor(this.fullResultsData.length / this.itemsPerPage);
-    d3.select("#next-victory-page").attr("disabled", this.currentVictoryPage >= maxPage ? true : null);
+    d3.select("#next-victory-page").attr("disabled", this.currentVictoryPage >= maxPage ? true : null).classed("disabled", this.currentVictoryPage >= maxPage);
   }
   
 
@@ -466,8 +466,10 @@ export class StackedBarVisualization extends VisualizationBase {
       .style("display", "flex");
 
     navContainer.append("button")
-      .attr("id", "prev-page")
+      .attr("id", "viz2-prev-page")
       .attr("class", "primary-button")
+      .attr("disabled", this.currentPage === 0 ? true : null)
+      .classed("disabled", this.currentPage === 0)
       .text("← Précédent")
       .on("click", () => this.goToPreviousPage());
 
@@ -476,9 +478,12 @@ export class StackedBarVisualization extends VisualizationBase {
       .style("margin", "0 12px")
       .style("align-self", "center");
 
+    const maxPage = Math.floor(this.fullWinnerData.length / this.itemsPerPage);
     navContainer.append("button")
-      .attr("id", "next-page")
+      .attr("id", "viz2-next-page")
       .attr("class", "primary-button")
+      .attr("disabled", this.currentPage >= maxPage ? true : null)
+      .classed("disabled", this.currentPage >= maxPage)
       .text("Suivant →")
       .on("click", () => this.goToNextPage());
 
@@ -492,6 +497,8 @@ export class StackedBarVisualization extends VisualizationBase {
     victoryNavContainer.append("button")
       .attr("id", "prev-victory-page")
       .attr("class", "primary-button")
+      .attr("disabled", this.currentVictoryPage === 0 ? true : null)
+      .classed("disabled", this.currentVictoryPage === 0)
       .text("← Précédent")
       .on("click", () => this.goToPreviousVictoryPage());
 
@@ -500,9 +507,12 @@ export class StackedBarVisualization extends VisualizationBase {
       .style("margin", "0 12px")
       .style("align-self", "center");
 
+    const maxPageVictory = Math.floor(this.fullResultsData.length / this.itemsPerPage);
     victoryNavContainer.append("button")
       .attr("id", "next-victory-page")
       .attr("class", "primary-button")
+      .attr("disabled", this.currentPage >= maxPageVictory ? true : null)
+      .classed("disabled", this.currentPage >= maxPageVictory)
       .text("Suivant →")
       .on("click", () => this.goToNextVictoryPage());
 

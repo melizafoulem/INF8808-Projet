@@ -414,4 +414,9 @@
   .pagination-container > * {
     margin: 0 15px;
   }
+
+  button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
   

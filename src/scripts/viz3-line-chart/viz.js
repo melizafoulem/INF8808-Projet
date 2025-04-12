@@ -420,6 +420,10 @@ export class LineChartVisualization extends VisualizationBase {
     this.drawLines(currentData, xScale, yScale, colorScale);
     this.drawPoints(currentData, xScale, yScale, colorScale);
     this.createLineChartLegend(currentData.map(d => d.name), colorScale);
+
+    const maxPage = Math.floor(this.fullLineData.length / this.itemsPerPage);
+    d3.select(`#viz3-prev-page`).attr("disabled", this.currentPage === 0 ? true : null).classed("disabled", this.currentPage === 0);
+    d3.select(`#viz2-next-page`).attr("disabled", this.currentPage >= maxPage ? true : null).classed("disabled", this.currentPage >= maxPage);
   }
 
   createPaginationControls() {
@@ -434,7 +438,9 @@ export class LineChartVisualization extends VisualizationBase {
     nav.append('button')
       .text('← Précédent')
       .attr('class', 'primary-button')
-      .attr('id', 'prev-page')
+      .attr('id', 'viz3-prev-page')
+      .attr("disabled", this.currentPage === 0 ? true : null)
+      .classed("disabled", this.currentPage === 0)
       .on('click', () => {
         if (this.currentPage > 0) {
           this.currentPage--;
@@ -447,12 +453,14 @@ export class LineChartVisualization extends VisualizationBase {
       .attr('id', 'page-indicator-viz3')
       .style('align-self', 'center');
   
+    const maxPage = Math.floor(this.fullLineData.length / this.itemsPerPage);
     nav.append('button')
       .text('Suivant →')
       .attr('class', 'primary-button')
-      .attr('id', 'next-page')
+      .attr('id', 'viz2-next-page')
+      .attr("disabled", this.currentPage >= maxPage ? true : null)
+      .classed("disabled", this.currentPage >= maxPage)
       .on('click', () => {
-        const maxPage = Math.floor(this.fullLineData.length / this.itemsPerPage);
         if (this.currentPage < maxPage) {
           this.currentPage++;
           this.updatePaginatedData(this.xScale, this.yScale, this.colorScale);

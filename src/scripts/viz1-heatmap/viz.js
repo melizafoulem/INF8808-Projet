@@ -271,14 +271,20 @@ export class HeatmapVisualization extends VisualizationBase {
   
     const maxPage = Math.floor(this.fullData.openings.length / this.itemsPerPage);
     const prefix = this.uniqueId;
-    d3.select(`${prefix}-prev-page`).attr("disabled", this.currentPage === 0 ? true : null);
-    d3.select(`${prefix}-next-page`).attr("disabled", this.currentPage >= maxPage ? true : null);
+    d3.select(`#${prefix}-prev-page`).attr("disabled", this.currentPage === 0 ? true : null).classed("disabled", this.currentPage === 0);
+    d3.select(`#${prefix}-next-page`).attr("disabled", this.currentPage >= maxPage ? true : null).classed("disabled", this.currentPage >= maxPage);
   }
   
 
   createPaginationControls() {
     const container = d3.select(`#${this.containerId}`);
     container.selectAll('.pagination-container').remove();
+    const maxPage = Math.floor(this.fullData.openings.length / this.itemsPerPage);
+
+    const totalOpenings = this.fullData.openings.length;
+    if (totalOpenings <= this.itemsPerPage) {
+      return;
+    }
     const prefix = this.uniqueId;
 
     const navContainer = container.append("div")
@@ -289,6 +295,8 @@ export class HeatmapVisualization extends VisualizationBase {
     navContainer.append("button")
       .attr("id", `${prefix}-prev-page`)
       .attr("class", "primary-button")
+      .attr("disabled", this.currentPage === 0 ? true : null)
+      .classed("disabled", this.currentPage === 0)
       .text("← Précédent")
       .on("click", () => this.goToPreviousPage());
 
@@ -300,6 +308,8 @@ export class HeatmapVisualization extends VisualizationBase {
     navContainer.append("button")
       .attr("id", `${prefix}-next-page`)
       .attr("class", "primary-button")
+      .attr("disabled", this.currentPage >= maxPage ? true : null)
+      .classed("disabled", this.currentPage >= maxPage)
       .text("Suivant →")
       .on("click", () => this.goToNextPage());
   
