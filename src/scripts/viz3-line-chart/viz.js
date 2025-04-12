@@ -26,6 +26,10 @@ export class LineChartVisualization extends VisualizationBase {
       highlightedPointRadius: 6,
       ...options
     };
+
+    this.fullLineData = [];
+    this.currentPage = 0;
+    this.itemsPerPage = 5;
   }
   
   /**
@@ -61,9 +65,15 @@ export class LineChartVisualization extends VisualizationBase {
     
     // Draw points
     this.drawPoints(formattedData, xScale, yScale, colorScale);
-    
-    // Create legend
-    this.createLineChartLegend(openings, colorScale);
+
+    // Pagination
+    this.fullLineData = formattedData;
+    this.currentPage = 0;
+    this.updatePaginatedData(xScale, yScale, colorScale);
+    this.createPaginationControls();
+    this.xScale = xScale;
+    this.yScale = yScale;
+    this.colorScale = colorScale;
   }
   
   /**
@@ -82,20 +92,25 @@ export class LineChartVisualization extends VisualizationBase {
    * @returns {Array} - Formatted data for line chart
    */
   formatDataForLineChart(data, openings) {
-    return openings.map(opening => ({
-      name: opening,
-      values: data.map(d => {
-        const found = d.openings.find(o => o.name === opening);
+    return openings
+      .map(opening => {
+        const values = data.map(d => {
+          const found = d.openings.find(o => o.name === opening);
+          return {
+            range: d.range,
+            eloValue: parseInt(d.range.split('-')[0]),
+            whiteWinPct: found && found.total >= 3 ? found.whiteWinPct : null,
+            blackWinPct: found ? found.blackWinPct : 0,
+            drawPct: found ? found.drawPct : 0,
+            total: found ? found.total : 0
+          };
+        }).sort((a, b) => a.eloValue - b.eloValue);
+
         return {
-          range: d.range,
-          eloValue: parseInt(d.range.split('-')[0]), // Use start of range for x value
-          whiteWinPct: found ? found.whiteWinPct : 0,
-          blackWinPct: found ? found.blackWinPct : 0,
-          drawPct: found ? found.drawPct : 0,
-          total: found ? found.total : 0
+          name: opening,
+          values
         };
-      }).sort((a, b) => a.eloValue - b.eloValue) // Sort by Elo value
-    }));
+    }).filter(openingData => openingData.values.some(v => v.total >= 3));
   }
   
   /**
@@ -170,6 +185,7 @@ export class LineChartVisualization extends VisualizationBase {
   drawLines(data, xScale, yScale, colorScale) {
     // Create line generator
     const line = d3.line()
+      .defined(d => d.whiteWinPct !== null)
       .x(d => xScale(d.eloValue))
       .y(d => yScale(d.whiteWinPct))
       .curve(d3.curveMonotoneX); // Smooth curve
@@ -209,7 +225,7 @@ export class LineChartVisualization extends VisualizationBase {
       
       // Draw points
       this.graphGroup.selectAll(`.point-${className}`)
-        .data(opening.values)
+        .data(opening.values.filter(d => d.whiteWinPct !== null))
         .enter()
         .append('circle')
         .attr('class', `point point-${className}`)
@@ -255,6 +271,7 @@ export class LineChartVisualization extends VisualizationBase {
    */
   createTooltipContent(opening, dataPoint) {
     return `
+      ${dataPoint.total < 10 ? '<div style="color:red; margin-bottom: 5px;">⚠ Donnée peu significative (peu de parties)</div>' : ''}
       <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${opening.name}</div>
       <div style="margin-bottom: 8px; font-size: 11px; color: #777;">${dataPoint.range}</div>
       <table style="width: 100%; border-collapse: collapse;">
@@ -388,6 +405,77 @@ export class LineChartVisualization extends VisualizationBase {
       .style('fill', '#666')
       .text('Aucune donnée disponible pour les filtres sélectionnés');
   }
+
+  getCurrentPageData() {
+    const start = this.currentPage * this.itemsPerPage;
+    return this.fullLineData.slice(start, start + this.itemsPerPage);
+  }
+
+  updatePaginatedData(xScale, yScale, colorScale) {
+    this.graphGroup.selectAll('.line').remove();
+    this.graphGroup.selectAll('.point').remove();
+    this.graphGroup.selectAll('.legend').remove();
+  
+    const currentData = this.getCurrentPageData();
+    this.drawLines(currentData, xScale, yScale, colorScale);
+    this.drawPoints(currentData, xScale, yScale, colorScale);
+    this.createLineChartLegend(currentData.map(d => d.name), colorScale);
+
+    const maxPage = Math.floor(this.fullLineData.length / this.itemsPerPage);
+    d3.select(`#viz3-prev-page`).attr("disabled", this.currentPage === 0 ? true : null).classed("disabled", this.currentPage === 0);
+    d3.select(`#viz2-next-page`).attr("disabled", this.currentPage >= maxPage ? true : null).classed("disabled", this.currentPage >= maxPage);
+  }
+
+  createPaginationControls() {
+    const container = d3.select(`#${this.containerId}`);
+    const nav = container.append('div')
+      .attr('id', 'viz3-pagination')
+      .attr("class", "pagination-container")
+      .style('display', 'flex')
+      .style('gap', '12px')
+      .style('margin-top', '20px');
+  
+    nav.append('button')
+      .text('← Précédent')
+      .attr('class', 'primary-button')
+      .attr('id', 'viz3-prev-page')
+      .attr("disabled", this.currentPage === 0 ? true : null)
+      .classed("disabled", this.currentPage === 0)
+      .on('click', () => {
+        if (this.currentPage > 0) {
+          this.currentPage--;
+          this.updatePaginatedData(this.xScale, this.yScale, this.colorScale);
+          this.updatePageIndicator();
+        }
+      });
+  
+    nav.append('span')
+      .attr('id', 'page-indicator-viz3')
+      .style('align-self', 'center');
+  
+    const maxPage = Math.floor(this.fullLineData.length / this.itemsPerPage);
+    nav.append('button')
+      .text('Suivant →')
+      .attr('class', 'primary-button')
+      .attr('id', 'viz2-next-page')
+      .attr("disabled", this.currentPage >= maxPage ? true : null)
+      .classed("disabled", this.currentPage >= maxPage)
+      .on('click', () => {
+        if (this.currentPage < maxPage) {
+          this.currentPage++;
+          this.updatePaginatedData(this.xScale, this.yScale, this.colorScale);
+          this.updatePageIndicator();
+        }
+      });
+  
+    this.updatePageIndicator();
+  }
+
+  updatePageIndicator() {
+    const totalPages = Math.ceil(this.fullLineData.length / this.itemsPerPage);
+    const current = this.currentPage + 1;
+    d3.select('#page-indicator-viz3').text(`Page ${current} sur ${totalPages}`);
+  }  
   
   /**
    * Update the visualization with new data

@@ -47,8 +47,7 @@ export function getTopNOpeningsWinners(data, n) {
             blackWinPct: (stats.blackWins / stats.total) * 100,
             drawPct: (stats.draws / stats.total) * 100
         }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, n);
+        .sort((a, b) => b.total - a.total);
 
     return sortedOpenings;
 }
@@ -80,8 +79,7 @@ export function getTopNOpeningsWithResults(data, n) {
             outoftimePct: (stats.outoftime / stats.total) * 100,
             drawPct: (stats.draw / stats.total) * 100
         }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, n);
+        .sort((a, b) => b.total - a.total);
 
     return sortedOpenings;
 }
@@ -97,7 +95,6 @@ export function getWinRateByOpeningAcrossEloRanges(data, n) {
     const topOpenings = new Set(
         Object.entries(openingCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, n)
             .map(([name]) => name)
     );
 
@@ -261,60 +258,27 @@ export function getTimeControlOptions(data) {
 }
 
 // De plus, modifions la fonction getOpeningUsageByElo pour utiliser cette estimation
-export function getOpeningUsageByElo(data, n, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
+export function getOpeningUsageByElo(data, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
     // Normaliser les données pour garantir que rated est un booléen
     const processedData = data.map(d => {
         // Convertir rated en booléen (peut être une chaîne "true"/"false" dans le CSV)
         const ratedValue = typeof d.rated === 'string' 
             ? d.rated.toLowerCase() === 'true' 
             : !!d.rated;
-            
-        if (d.time_control) {
-            return {
-                ...d,
-                rated: ratedValue
-            };
-        }
-        
-        let timeControlCategory = 'Non défini';
-        
-        if (d.created_at && d.last_move_at) {
-            const startTime = new Date(d.created_at);
-            const endTime = new Date(d.last_move_at);
-            const totalTimeSeconds = (endTime - startTime) / 1000;
-            
-            const numMoves = d.turns || 40;
-            const averageTimePerMove = totalTimeSeconds / numMoves;
-            
-            if (averageTimePerMove <= 3) {
-                timeControlCategory = 'Bullet';
-            } else if (averageTimePerMove <= 10) {
-                timeControlCategory = 'Blitz';
-            } else if (averageTimePerMove <= 30) {
-                timeControlCategory = 'Rapide';
-            } else {
-                timeControlCategory = 'Classique';
-            }
-        }
+
+        const ratedType = ratedValue ? 'rated' : 'casual'
         
         return {
             ...d,
-            rated: ratedValue,
-            estimated_time_control: timeControlCategory
+            ratedType: ratedType
         };
     });
     
-    // Debug pour vérifier les valeurs de rated
-    console.log('Filter type:', filterType);
-    console.log('Example rated values:', processedData.slice(0, 5).map(d => d.rated));
-    
     const openingCounts = {};
     processedData.forEach(d => {
-        const effectiveTimeControl = d.time_control || d.estimated_time_control;
-        
         // Vérifier si la partie correspond aux filtres
-        if ((filterType !== null && d.rated !== filterType) || 
-            (timeControl !== null && effectiveTimeControl !== timeControl)) {
+        if ((filterType !== null && d.ratedType !== filterType) || 
+            (timeControl !== null && d.estimated_time_control !== timeControl)) {
             return;
         }
         
@@ -327,17 +291,14 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
     if (sortBy === 'popularity') {
         topOpenings = Object.entries(openingCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, n)
             .map(([name]) => name);
     } else if (sortBy === 'name') {
         topOpenings = Object.entries(openingCounts)
             .sort((a, b) => a[0].localeCompare(b[0]))
-            .slice(0, n)
             .map(([name]) => name);
     }
     
     if (!topOpenings || topOpenings.length === 0) {
-        console.log('No openings found with the current filters');
         return {
             data: [],
             openings: [],
@@ -350,7 +311,7 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
         const effectiveTimeControl = d.time_control || d.estimated_time_control;
         
         // Appliquer les filtres
-        if ((filterType !== null && d.rated !== filterType) || 
+        if ((filterType !== null && d.ratedType !== filterType) || 
             (timeControl !== null && effectiveTimeControl !== timeControl)) {
             return false;
         }
@@ -359,7 +320,6 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
     });
     
     if (filteredData.length === 0) {
-        console.log('No data found with the current filters');
         return {
             data: [],
             openings: [],
@@ -423,7 +383,6 @@ export function getOpeningUsageByElo(data, n, filterType = null, timeControl = n
             d.relativeCount = total > 0 ? (d.count / total) * 100 : 0;
         }
     }
-    console.log(heatmapData)
 
     return {
         data: heatmapData,
@@ -436,7 +395,6 @@ export function getEloRange(data) {
     const elos = data.flatMap(d => [d.white_rating, d.black_rating]);
     const minElo = Math.floor(Math.min(...elos) / 100) * 100;
     const maxElo = Math.ceil(Math.max(...elos) / 100) * 100;
-    console.log(`min Elo ${minElo}, max Elo ${maxElo}`)
     return { "min": minElo, "max": maxElo }
 }
 

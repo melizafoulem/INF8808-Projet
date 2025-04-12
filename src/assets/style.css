@@ -197,6 +197,10 @@
     gap: 30px;
     margin-bottom: 40px;
   }
+
+  #viz1-container {
+    grid-column: span 2;
+  }
   
   .viz-card {
     background-color: white;
@@ -394,6 +398,26 @@
     display: inline-block;
     max-width: 100%;
     white-space: nowrap;
+  }
+
+  .heatmap-grid-6 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 10px;
+  }
+
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .pagination-container > * {
+    margin: 0 15px;
+  }
+
+  button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
   }
 
   .circle-multiple-grid {

@@ -21,11 +21,11 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
   let state = {
     data: null,
     filters: {
-      opening: 'all',
-      elo: 'all',
-      color: 'both',
-      gameType: 'all',
-      timeControl: 'all',
+      opening: [],
+      elo: [],
+      color: [],
+      gameType: [],
+      timeControl: [],
       search: ''
     }
   };
@@ -35,11 +35,16 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
     // Load data
     d3.csv('./games.csv', d3.autoType)
       .then(function (data) {
-        console.log('Data loaded successfully:', data.length, 'rows');
         state.data = data;
         
+        // Estimate time par game
+        estimateTimePerGame(data)
+
         // Initialize filter dropdowns
         initializeFilters(data);
+
+        // Set filter selection
+        updateFilters()
         
         // Draw all visualizations
         drawVisualizations(data);
@@ -51,6 +56,31 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
         console.error('Error loading data:', error);
         showErrorMessage('Failed to load chess games data. Please try again later.');
       });
+  }
+
+  function estimateTimePerGame(data) {
+    data.forEach(d => {
+      if (!d.increment_code || !d.increment_code.includes('+')) {
+        d.estimated_time_control = 'Unknown';
+        return;
+      }
+
+      const [initialStr, incrementStr] = d.increment_code.split('+');
+      const initial = parseInt(initialStr);
+      const increment = parseInt(incrementStr);
+
+      const estimatedTime = initial * 60 + increment * d.turns;
+
+      if (estimatedTime < 180) {
+        d.estimated_time_control = 'Bullet';
+      } else if (estimatedTime < 480) {
+        d.estimated_time_control = 'Blitz';
+      } else if (estimatedTime < 1500) {
+        d.estimated_time_control = 'Rapide';
+      } else {
+        d.estimated_time_control = 'Classique';
+      }
+    })
   }
 
   // Initialize filter dropdowns with data-driven options
@@ -236,7 +266,7 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
     const filteredData = applyFilters(data);
     
     // Draw each visualization with filtered data
-    viz1.drawViz(filteredData, svgSize, margin, graphSize);
+    viz1.drawSixHeatmaps(filteredData, svgSize, margin, graphSize);
     viz2.drawViz(filteredData, svgSize, margin, graphSize);
     viz3.drawViz(filteredData, svgSize, margin, graphSize);
     viz4.drawViz(filteredData, svgSize, margin, graphSize);
@@ -247,22 +277,22 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
   function applyFilters(data) {
     return data.filter(d => {
       // Opening filter
-      if (state.filters.opening !== 'all') {
-        const opening = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
-        if (opening !== state.filters.opening) return false;
-      }
+      const opening = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '').trim();
+      if (!state.filters.opening.includes(opening)) return false
       
+      // Elo filter + Color filter
+      const { white_rating, black_rating } = d;
+      const { min, max } = state.filters.elo;
+      const colors = state.filters.color;
+      if (colors.includes('white') && (white_rating < min || white_rating > max)) return false;
+      if (colors.includes('black') && (black_rating < min || black_rating > max)) return false;
+
       // Game type filter (rated/casual)
-      if (state.filters.gameType !== 'all') {
-        const isRated = state.filters.gameType === 'rated';
-        if (d.rated !== isRated) return false;
-      }
+      const type = d.rated.toLowerCase() === 'true' ? 'rated' : 'casual';
+      if (!state.filters.gameType.includes(type)) return false;
       
       // Time control filter
-      if (state.filters.timeControl !== 'all') {
-        const timeControl = d.time_control || d.estimated_time_control;
-        if (timeControl !== state.filters.timeControl) return false;
-      }
+      if (!state.filters.timeControl.includes(d.estimated_time_control)) return false;
       
       // Search filter (if any)
       if (state.filters.search) {
@@ -301,11 +331,41 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
   
   // Update filters from UI controls
   function updateFilters() {
-    state.filters.opening = d3.select('#opening-filter').property('value');
-    state.filters.elo = d3.select('#elo-filter').property('value');
-    state.filters.color = d3.select('#color-filter').property('value');
-    state.filters.gameType = d3.select('#game-type-filter').property('value');
-    state.filters.timeControl = d3.select('#time-control-filter').property('value');
+    // filter for openings
+    const selectedOpenings = [];
+    d3.selectAll('#checkbox-options input[type="checkbox"]:checked')
+      .each(function() {
+        if (this.value !== 'all') {
+          selectedOpenings.push(this.value);
+        }
+      });
+    state.filters.opening = selectedOpenings;
+
+    // filter for elo
+    const eloMin = d3.select('#elo-min').property('value');
+    const eloMax = d3.select('#elo-max').property('value');
+    state.filters.elo = { min: +eloMin, max: +eloMax };
+
+    // filter for color
+    state.filters.color = [];
+    d3.selectAll('#color-dropdown-menu input[type="checkbox"]:checked')
+      .each(function() {
+        state.filters.color.push(this.value)
+      });
+    
+    // filter for rated or unrated
+    state.filters.gameType = []
+    d3.selectAll('#game-type-dropdown-menu input[type="checkbox"]:checked')
+      .each(function() {
+        state.filters.gameType.push(this.value)
+      });
+    
+    // filter for time control
+    state.filters.timeControl = []
+    d3.selectAll('#time-control-dropdown-menu input[type="checkbox"]:checked')
+      .each(function() {
+        state.filters.timeControl.push(this.value)
+      });
   }
   
   // Redraw all visualizations after filter changes
@@ -313,6 +373,12 @@ import * as viz5 from './scripts/viz5-scatter-plot/viz.js';
     // Clear existing visualizations
     d3.selectAll('.graph svg').remove();
     
+    // Clear UI elements outside of SVG that need to be refreshed
+    d3.selectAll('.legend').remove();
+    d3.select('#viz2-pagination').remove();
+    d3.select('#viz2-victory-pagination').remove();
+    d3.select('#viz3-pagination').remove();
+
     // Draw with updated filters
     drawVisualizations(state.data);
   }

@@ -30,6 +30,13 @@ export class StackedBarVisualization extends VisualizationBase {
     this.victoryStatusGroup = null;
     this.winLegend = null;
     this.victoryLegend = null;
+
+    // Data for pagination
+    this.fullWinnerData = [];
+    this.currentPage = 0;
+    this.fullResultsData = [];
+    this.currentVictoryPage = 0;
+    this.itemsPerPage = this.options.numOpenings || 10;
   }
   
   /**
@@ -60,12 +67,21 @@ export class StackedBarVisualization extends VisualizationBase {
     // Preprocess data for both chart types
     const topOpeningWinners = preprocess.getTopNOpeningsWinners(data, this.options.numOpenings).sort((a, b) => b.whiteWinPct - a.whiteWinPct);
     const topOpeningResults = preprocess.getTopNOpeningsWithResults(data, this.options.numOpenings).sort((a, b) => b.matePct - a.matePct);
+
+    // Set pagination data
+    this.fullWinnerData = topOpeningWinners;
+    this.currentPage = 0;
+    this.fullResultsData = topOpeningResults
+    this.currentVictoryPage = 0;
+
+    this.updatePaginatedData();
     
     // Set initial chart title
     this.setTitle("Répartition des victoires par ouverture");
     
     // Create scales and axes
-    const { xScale, yScale: yScaleWins } = this.createScales(topOpeningWinners);
+    const currentPageData = this.getCurrentPageData();
+    const { xScale, yScale: yScaleWins } = this.createScales(currentPageData);
     const yScaleVictory = d3.scaleBand()
       .domain(topOpeningResults.map(d => d.name))
       .range([0, this.graphSize.height])
@@ -76,13 +92,16 @@ export class StackedBarVisualization extends VisualizationBase {
     
     // Draw both chart types
     this.drawWinsByColorChart(topOpeningWinners, xScale, yScaleWins);
-    this.drawVictoryStatusChart(topOpeningResults, xScale, yScaleVictory);
+    this.updateVictoryPaginatedData();
     
     // Setup toggle button
     this.setupToggleButton();
     
     // Create legends
     this.createLegends();
+
+    // Create pagination
+    this.createPagination();
     
     // Initially hide victory status chart
     this.victoryStatusGroup.style('opacity', 0);
@@ -342,6 +361,9 @@ export class StackedBarVisualization extends VisualizationBase {
       
       this.graphGroup.selectAll('.y-axis').remove();
       this.createYAxis(this.yScaleVictory, 'Ouverture');
+
+      d3.select("#viz2-pagination").style("display", "none");
+      d3.select("#viz2-victory-pagination").style("display", "flex");
     } else {
       // Switch to wins by color chart
       this.victoryStatusGroup.transition().duration(500)
@@ -369,8 +391,176 @@ export class StackedBarVisualization extends VisualizationBase {
 
       this.graphGroup.selectAll('.y-axis').remove();
       this.createYAxis(this.yScaleWins, 'Ouverture');
+
+      d3.select("#viz2-pagination").style("display", "flex");
+      d3.select("#viz2-victory-pagination").style("display", "none");
     }    
   }
+
+  getCurrentPageData() {
+    const start = this.currentPage * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.fullWinnerData.slice(start, end);
+  }
+
+  getCurrentVictoryPageData() {
+    const start = this.currentVictoryPage * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.fullResultsData.slice(start, end);
+  }
+
+  updatePaginatedData() {
+    const paginatedData = this.getCurrentPageData();
+
+    this.graphGroup.selectAll('.y-axis').remove();
+  
+    const xScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([0, this.graphSize.width]);
+  
+    const { yScale } = this.createScales(paginatedData);
+  
+    this.yScaleWins = yScale;
+  
+    this.winsByColorGroup.selectAll('*').remove();
+    this.drawWinsByColorChart(paginatedData, xScale, yScale);
+    this.updatePageIndicator();
+
+    d3.select("#viz2-prev-page").attr("disabled", this.currentPage === 0 ? true : null).classed("disabled", this.currentPage === 0);
+    const maxPage = Math.floor(this.fullWinnerData.length / this.itemsPerPage);
+    d3.select("#viz2-next-page").attr("disabled", this.currentPage >= maxPage ? true : null).classed("disabled", this.currentPage >= maxPage);
+  }
+
+  updateVictoryPaginatedData() {
+    const paginatedData = this.getCurrentVictoryPageData();
+  
+    this.graphGroup.selectAll('.y-axis').remove();
+  
+    const xScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([0, this.graphSize.width]);
+  
+    const yScale = d3.scaleBand()
+      .domain(paginatedData.map(d => d.name))
+      .range([0, this.graphSize.height])
+      .padding(0.3);
+  
+    this.yScaleVictory = yScale;
+  
+    this.victoryStatusGroup.selectAll('*').remove();
+    this.drawVictoryStatusChart(paginatedData, xScale, yScale);
+    this.createYAxis(this.yScaleVictory, 'Ouverture');
+    this.updateVictoryPageIndicator();
+  
+    d3.select("#prev-victory-page").attr("disabled", this.currentVictoryPage === 0 ? true : null).classed("disabled", this.currentVictoryPage === 0);
+    const maxPage = Math.floor(this.fullResultsData.length / this.itemsPerPage);
+    d3.select("#next-victory-page").attr("disabled", this.currentVictoryPage >= maxPage ? true : null).classed("disabled", this.currentVictoryPage >= maxPage);
+  }
+  
+
+  createPagination() {
+    const container = d3.select(`#${this.containerId}`);
+    const navContainer = container.append("div")
+      .attr("id", "viz2-pagination")
+      .attr("class", "pagination-container")
+      .style("display", "flex");
+
+    navContainer.append("button")
+      .attr("id", "viz2-prev-page")
+      .attr("class", "primary-button")
+      .attr("disabled", this.currentPage === 0 ? true : null)
+      .classed("disabled", this.currentPage === 0)
+      .text("← Précédent")
+      .on("click", () => this.goToPreviousPage());
+
+    navContainer.append("span")
+      .attr("id", "page-indicator")
+      .style("margin", "0 12px")
+      .style("align-self", "center");
+
+    const maxPage = Math.floor(this.fullWinnerData.length / this.itemsPerPage);
+    navContainer.append("button")
+      .attr("id", "viz2-next-page")
+      .attr("class", "primary-button")
+      .attr("disabled", this.currentPage >= maxPage ? true : null)
+      .classed("disabled", this.currentPage >= maxPage)
+      .text("Suivant →")
+      .on("click", () => this.goToNextPage());
+
+    this.updatePageIndicator();
+
+    const victoryNavContainer = container.append("div")
+      .attr("id", "viz2-victory-pagination")
+      .attr("class", "pagination-container")
+      .style("display", "none");
+
+    victoryNavContainer.append("button")
+      .attr("id", "prev-victory-page")
+      .attr("class", "primary-button")
+      .attr("disabled", this.currentVictoryPage === 0 ? true : null)
+      .classed("disabled", this.currentVictoryPage === 0)
+      .text("← Précédent")
+      .on("click", () => this.goToPreviousVictoryPage());
+
+    victoryNavContainer.append("span")
+      .attr("id", "victory-page-indicator")
+      .style("margin", "0 12px")
+      .style("align-self", "center");
+
+    const maxPageVictory = Math.floor(this.fullResultsData.length / this.itemsPerPage);
+    victoryNavContainer.append("button")
+      .attr("id", "next-victory-page")
+      .attr("class", "primary-button")
+      .attr("disabled", this.currentPage >= maxPageVictory ? true : null)
+      .classed("disabled", this.currentPage >= maxPageVictory)
+      .text("Suivant →")
+      .on("click", () => this.goToNextVictoryPage());
+
+    this.updateVictoryPageIndicator();
+  }
+
+  updatePageIndicator() {
+    const totalPages = Math.ceil(this.fullWinnerData.length / this.itemsPerPage);
+    const currentPageDisplay = this.currentPage + 1;
+    d3.select("#page-indicator").text(`Page ${currentPageDisplay} sur ${totalPages}`);
+  }
+
+  updateVictoryPageIndicator() {
+    const totalPages = Math.ceil(this.fullResultsData.length / this.itemsPerPage);
+    const currentPageDisplay = this.currentVictoryPage + 1;
+    d3.select("#victory-page-indicator").text(`Page ${currentPageDisplay} sur ${totalPages}`);
+  }  
+
+  goToNextPage() {
+    const maxPage = Math.floor(this.fullWinnerData.length / this.itemsPerPage);
+    if (this.currentPage < maxPage) {
+      this.currentPage++;
+      this.updatePaginatedData();
+    }
+  }
+
+  goToPreviousPage() {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.updatePaginatedData();
+    }
+  }
+
+  goToNextVictoryPage() {
+    const maxPage = Math.floor(this.fullResultsData.length / this.itemsPerPage);
+    if (this.currentVictoryPage < maxPage) {
+      this.currentVictoryPage++;
+      this.updateVictoryPaginatedData();
+    }
+  }
+  
+  goToPreviousVictoryPage() {
+    if (this.currentVictoryPage > 0) {
+      this.currentVictoryPage--;
+      this.updateVictoryPaginatedData();
+    }
+  }
+  
   
   /**
    * Update the visualization with new data

@@ -18,18 +18,23 @@ export class HeatmapVisualization extends VisualizationBase {
     // Heatmap specific options
     this.options = {
       ...this.options,
-      numOpenings: 10,
       colorScheme: d3.interpolateYlOrRd,
+      itemsPerPage: 10,
       ...options
     };
     
     // Filter state
     this.filterState = {
-      rated: 'all',
-      timeControl: 'all',
+      rated: null,
+      timeControl: null,
       color: 'both',
       sortBy: 'popularity'
     };
+
+    this.uniqueId = options.uniqueId || 'default';
+    this.currentPage = 0;
+    this.itemsPerPage = this.options.itemsPerPage || 10;
+    this.fullData = [];
   }
   
   /**
@@ -42,30 +47,24 @@ export class HeatmapVisualization extends VisualizationBase {
     
     // Preprocess data for heatmap
     const filteredData = preprocess.getOpeningUsageByElo(
-      data, 
-      this.options.numOpenings,
-      this.filterState.rated === 'rated' ? true : this.filterState.rated === 'casual' ? false : null,
-      this.filterState.timeControl === 'all' ? null : this.filterState.timeControl,
+      data,
+      this.filterState.rated,
+      this.filterState.timeControl,
       this.filterState.color,
       this.filterState.sortBy
     );
-    
-    // Set chart title
-    this.setTitle(`Top ${this.options.numOpenings} ouvertures par utilisation selon les plages Elo`);
     
     // Check if we have data
     if (!filteredData.data || filteredData.data.length === 0) {
       this.showNoDataMessage();
       return;
     }
-    
-    // Draw the heatmap
-    this.drawHeatmap(filteredData);
-    
-    // Setup filter controls - only on first draw
-    if (!document.querySelector('#viz1-filter-container')) {
-      this.setupFilters(data);
-    }
+
+    // Pagination
+    this.fullData = filteredData;
+    this.currentPage = 0;
+    this.updatePaginatedData();
+    this.createPaginationControls();
   }
   
   /**
@@ -237,139 +236,6 @@ export class HeatmapVisualization extends VisualizationBase {
   }
   
   /**
-   * Setup filter controls for the heatmap
-   * @param {Array} data - Chess games dataset
-   */
-  setupFilters(data) {
-    // Create filter container
-    const container = d3.select(`#${this.containerId}`);
-    const filterContainer = container.insert('div', ':first-child')
-      .attr('id', 'viz1-filter-container')
-      .attr('class', 'filter-container')
-      .style('margin-bottom', '20px')
-      .style('display', 'flex')
-      .style('flex-wrap', 'wrap')
-      .style('gap', '20px')
-      .style('justify-content', 'center');
-    
-    // Create rated/casual filter
-    this.createFilterDropdown(
-      filterContainer, 
-      'rated-filter', 
-      'Type de partie:',
-      [
-        { value: 'all', label: 'Toutes' },
-        { value: 'rated', label: 'Classées' },
-        { value: 'casual', label: 'Non classées' }
-      ]
-    );
-    
-    // Create time control filter
-    const timeControls = ['all', ...preprocess.getTimeControlOptions(data)];
-    this.createFilterDropdown(
-      filterContainer,
-      'time-control-filter',
-      'Contrôle du temps:',
-      timeControls.map(tc => ({ 
-        value: tc, 
-        label: tc === 'all' ? 'Tous' : tc 
-      }))
-    );
-    
-    // Create color filter
-    this.createFilterDropdown(
-      filterContainer,
-      'color-filter',
-      'Couleur du joueur:',
-      [
-        { value: 'both', label: 'Les deux' },
-        { value: 'white', label: 'Blanc' },
-        { value: 'black', label: 'Noir' }
-      ]
-    );
-    
-    // Create sort by filter
-    this.createFilterDropdown(
-      filterContainer,
-      'sort-by-filter',
-      'Trier par:',
-      [
-        { value: 'popularity', label: 'Popularité' },
-        { value: 'name', label: 'Nom' }
-      ]
-    );
-    
-    // Add event listeners
-    this.addFilterListeners();
-  }
-  
-  /**
-   * Create a filter dropdown
-   * @param {Selection} container - D3 selection of the container
-   * @param {string} id - ID for the dropdown
-   * @param {string} label - Label text
-   * @param {Array} options - Options for the dropdown
-   */
-  createFilterDropdown(container, id, labelText, options) {
-    const filter = container.append('div')
-      .attr('class', 'filter');
-    
-    filter.append('label')
-      .attr('for', id)
-      .text(labelText);
-    
-    const select = filter.append('select')
-      .attr('id', id);
-    
-    select.selectAll('option')
-      .data(options)
-      .enter()
-      .append('option')
-      .attr('value', d => d.value)
-      .text(d => d.label);
-    
-    return select;
-  }
-  
-  /**
-   * Add event listeners to filter controls
-   */
-  addFilterListeners() {
-    d3.select('#rated-filter').on('change', () => this.updateFilters());
-    d3.select('#time-control-filter').on('change', () => this.updateFilters());
-    d3.select('#color-filter').on('change', () => this.updateFilters());
-    d3.select('#sort-by-filter').on('change', () => this.updateFilters());
-  }
-  
-  /**
-   * Update filters and redraw visualization
-   */
-  updateFilters() {
-    // Get filter values
-    this.filterState.rated = d3.select('#rated-filter').property('value');
-    this.filterState.timeControl = d3.select('#time-control-filter').property('value');
-    this.filterState.color = d3.select('#color-filter').property('value');
-    this.filterState.sortBy = d3.select('#sort-by-filter').property('value');
-    
-    // Update title based on filters
-    let titleParts = [`Top ${this.options.numOpenings} ouvertures par utilisation selon les plages Elo`];
-    if (this.filterState.rated !== 'all') {
-      titleParts.push(`dans les parties ${this.filterState.rated === 'rated' ? 'classées' : 'non classées'}`);
-    }
-    if (this.filterState.timeControl !== 'all') {
-      titleParts.push(`avec contrôle de temps ${this.filterState.timeControl}`);
-    }
-    if (this.filterState.color !== 'both') {
-      titleParts.push(`pour les joueurs ${this.filterState.color === 'white' ? 'blancs' : 'noirs'}`);
-    }
-    
-    this.setTitle(titleParts.join(' '));
-    
-    // Redraw
-    this.update(this.data);
-  }
-  
-  /**
    * Show message when no data is available
    */
   showNoDataMessage() {
@@ -381,6 +247,94 @@ export class HeatmapVisualization extends VisualizationBase {
       .style('font-size', '16px')
       .style('fill', '#666')
       .text('Aucune donnée disponible pour les filtres sélectionnés');
+  }
+
+  updatePaginatedData() {
+    const start = this.currentPage * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+  
+    const pagedOpenings = this.fullData.openings.slice(start, end);
+    const pagedData = this.fullData.data.filter(d =>
+      pagedOpenings.includes(d.opening)
+    );
+  
+    this.graphGroup.selectAll('*').remove();
+    this.setTitle(`Top ${this.options.numOpenings} ouvertures par utilisation selon les plages Elo`);
+  
+    this.drawHeatmap({
+      ...this.fullData,
+      openings: pagedOpenings,
+      data: pagedData
+    });
+  
+    this.updatePageIndicator();
+  
+    const maxPage = Math.floor(this.fullData.openings.length / this.itemsPerPage);
+    const prefix = this.uniqueId;
+    d3.select(`#${prefix}-prev-page`).attr("disabled", this.currentPage === 0 ? true : null).classed("disabled", this.currentPage === 0);
+    d3.select(`#${prefix}-next-page`).attr("disabled", this.currentPage >= maxPage ? true : null).classed("disabled", this.currentPage >= maxPage);
+  }
+  
+
+  createPaginationControls() {
+    const container = d3.select(`#${this.containerId}`);
+    container.selectAll('.pagination-container').remove();
+    const maxPage = Math.floor(this.fullData.openings.length / this.itemsPerPage);
+
+    const totalOpenings = this.fullData.openings.length;
+    if (totalOpenings <= this.itemsPerPage) {
+      return;
+    }
+    const prefix = this.uniqueId;
+
+    const navContainer = container.append("div")
+      .attr("id", `${prefix}-viz1-pagination`)
+      .attr("class", "pagination-container")
+      .style("display", "flex");
+
+    navContainer.append("button")
+      .attr("id", `${prefix}-prev-page`)
+      .attr("class", "primary-button")
+      .attr("disabled", this.currentPage === 0 ? true : null)
+      .classed("disabled", this.currentPage === 0)
+      .text("← Précédent")
+      .on("click", () => this.goToPreviousPage());
+
+    navContainer.append("span")
+      .attr("id", `${prefix}-page-indicator`)
+      .style("margin", "0 12px")
+      .style("align-self", "center");
+
+    navContainer.append("button")
+      .attr("id", `${prefix}-next-page`)
+      .attr("class", "primary-button")
+      .attr("disabled", this.currentPage >= maxPage ? true : null)
+      .classed("disabled", this.currentPage >= maxPage)
+      .text("Suivant →")
+      .on("click", () => this.goToNextPage());
+  
+    this.updatePageIndicator();
+  }
+
+  goToNextPage() {
+    const maxPage = Math.floor(this.fullData.openings.length / this.itemsPerPage);
+    if (this.currentPage < maxPage) {
+      this.currentPage++;
+      this.updatePaginatedData();
+    }
+  }
+  
+  goToPreviousPage() {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.updatePaginatedData();
+    }
+  }
+  
+  updatePageIndicator() {
+    const totalPages = Math.ceil(this.fullData.openings.length / this.itemsPerPage);
+    const currentPageDisplay = this.currentPage + 1;
+    d3.select(`#${this.uniqueId}-page-indicator`).text(`Page ${currentPageDisplay} sur ${totalPages}`);
   }
   
   /**
@@ -414,3 +368,46 @@ export function drawViz(data, svgSize, margin, graphSize) {
   
   heatmap.draw(data);
 }
+
+export function drawSixHeatmaps(data, svgSize, margin, graphSize) {
+  const container = d3.select('#viz1-six-heatmaps');
+  container.selectAll('*').remove();
+
+  const configs = [
+    { id: 'rated', label: 'Parties classées', filter: { rated: 'rated' } },
+    { id: 'unrated', label: 'Parties non classées', filter: { rated: 'casual' } },
+    { id: 'bullet', label: 'Cadence Bullet', filter: { timeControl: 'Bullet' } },
+    { id: 'blitz', label: 'Cadence Blitz', filter: { timeControl: 'Blitz' } },
+    { id: 'rapid', label: 'Cadence Rapide', filter: { timeControl: 'Rapide' } },
+    { id: 'classical', label: 'Cadence Classique', filter: { timeControl: 'Classique' } },
+  ];
+
+  configs.forEach(config => {
+    const block = container.append('div')
+      .attr('class', 'heatmap-block');
+
+    block.append('h4')
+      .attr('class', 'chart-title')
+      .text(config.label);
+
+    const divId = `heatmap-${config.id}`;
+    block.append('div').attr('id', divId);
+
+    const heatmap = new HeatmapVisualization(divId, {
+      width: svgSize.width,
+      height: svgSize.height,
+      margin: margin,
+      uniqueId: `pagination-${config.id}`
+    });
+
+    if (config.filter.rated) {
+      heatmap.filterState.rated = config.filter.rated;
+    }
+    if (config.filter.timeControl) {
+      heatmap.filterState.timeControl = config.filter.timeControl;
+    }
+
+    heatmap.draw(data);
+  });
+}
+
