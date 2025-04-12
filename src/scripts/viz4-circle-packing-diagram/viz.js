@@ -69,9 +69,7 @@ export class CirclePackingVisualization {
     openingFamilies.forEach((family, i) => {
       const chart = grid.append("div").attr("class", "circle-multiple-chart");
   
-      chart.append("h4")
-        .attr("class", "chart-title")
-        .text(family.name);
+      this.appendTitleWithTooltip(chart, family);  
   
       const svg = chart.append("svg")
         .attr("width", 280)
@@ -231,6 +229,76 @@ export class CirclePackingVisualization {
     // Add interactive behaviors
     this.addCircleInteractions(node);
   }
+
+/**
+ * Append a title with an info icon and tooltip
+ * @param {Selection} parent - The parent D3 selection to append the title to
+ * @param {Object} family - The family data object
+ */
+appendTitleWithTooltip(parent, family) {
+  const titleContainer = parent.append("div")
+    .attr("class", "chart-title-container")
+    .style("display", "flex")
+    .style("align-items", "center")
+    .style("gap", "6px");
+
+  titleContainer.append("h4")
+    .attr("class", "chart-title")
+    .text(family.name)
+    .style("margin", "0");
+
+  const icon = titleContainer.append("span")
+    .attr("class", "info-icon")
+    .html("&#9432;") // ℹ️ icon
+    .style("cursor", "pointer")
+    .style("font-size", "16px")
+    .style("color", "#666");
+
+  let tooltipVisibleFor = null;
+
+  icon.on("click", (event) => {
+    event.stopPropagation(); // Prevent immediate close
+
+    const tooltip = d3.select(".tooltip");
+    const currentFamily = family.name;
+
+    if (tooltip.style("opacity") === "1" && tooltipVisibleFor === currentFamily) {
+      tooltip.transition().duration(200).style("opacity", 0);
+      tooltipVisibleFor = null;
+      return;
+    }
+
+    const totalGames = Math.round(
+      family.children.reduce((sum, v) => sum + v.count, 0) / this.options.variationInflationFactor
+    );
+
+    tooltip.transition().duration(200).style("opacity", 1);
+    tooltip.html(`
+      <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${family.name}</div>
+      <div style="font-size: 14px; margin-bottom: 5px;">
+        <span style="font-weight: bold;">${totalGames}</span> parties au total
+      </div>
+      <div style="font-size: 12px; color: #666;">
+        ${family.children.length} variante${family.children.length > 1 ? 's' : ''}
+      </div>
+    `)
+      .style("left", (event.pageX + 10) + "px")
+      .style("top", (event.pageY - 10) + "px");
+
+    tooltipVisibleFor = currentFamily;
+
+    // Close tooltip on outside click
+    d3.select("body").on("click.tooltip", function (e) {
+      if (!e.target.closest('.info-icon')) {
+        tooltip.transition().duration(200).style("opacity", 0);
+        tooltipVisibleFor = null;
+        d3.select("body").on("click.tooltip", null);
+      }
+    });
+  });
+}
+
+
   
   /**
    * Add interactive behaviors to circles
@@ -239,46 +307,46 @@ export class CirclePackingVisualization {
   addCircleInteractions(node) {
     const tooltip = d3.select("body").select(".tooltip");
   
-    // FAMILY NODES (depth === 1) — now showing correct family tooltip
-    node.filter(d => d.depth === 1)
-      .style("cursor", "pointer")
-      .on("mouseover", (event, d) => {
-        d3.select(event.currentTarget).select("circle")
-          .attr("stroke", "#333")
-          .attr("stroke-width", 3);
+    // // FAMILY NODES (depth === 1) — now showing correct family tooltip
+    // node.filter(d => d.depth === 1)
+    //   .style("cursor", "pointer")
+    //   .on("mouseover", (event, d) => {
+    //     d3.select(event.currentTarget).select("circle")
+    //       .attr("stroke", "#333")
+    //       .attr("stroke-width", 3);
   
-        const parentTotal = d.value;
-        const percentage = 100;
+    //     const parentTotal = d.value;
+    //     const percentage = 100;
   
-        tooltip.transition().duration(200).style("opacity", 1);
-        tooltip.html(`
-          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${d.data.name}</div>
-          <div style="margin-bottom: 8px; font-size: 11px; color: #777;">Variante: Principal</div>
-          <div style="font-size: 14px; margin-bottom: 5px;">
-            <span style="font-weight: bold;">${percentage.toFixed(1)}%</span> des parties
-          </div>
-          <div style="font-size: 12px; color: #666;">
-            (${Math.round(d.value / this.options.variationInflationFactor)} parties sur ${Math.round(parentTotal / this.options.variationInflationFactor)})
-          </div>
-        `)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px");
-      })
-      .on("mousemove", (event) => {
-        tooltip
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px");
-      })
-      .on("mouseout", (event) => {
-        d3.select(event.currentTarget).select("circle")
-          .attr("stroke", "#fff")
-          .attr("stroke-width", 1.5);
+    //     tooltip.transition().duration(200).style("opacity", 1);
+    //     tooltip.html(`
+    //       <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${d.data.name}</div>
+    //       <div style="margin-bottom: 8px; font-size: 11px; color: #777;">Variante: Principal</div>
+    //       <div style="font-size: 14px; margin-bottom: 5px;">
+    //         <span style="font-weight: bold;">${percentage.toFixed(1)}%</span> des parties
+    //       </div>
+    //       <div style="font-size: 12px; color: #666;">
+    //         (${Math.round(d.value / this.options.variationInflationFactor)} parties sur ${Math.round(parentTotal / this.options.variationInflationFactor)})
+    //       </div>
+    //     `)
+    //       .style("left", (event.pageX + 10) + "px")
+    //       .style("top", (event.pageY - 10) + "px");
+    //   })
+    //   .on("mousemove", (event) => {
+    //     tooltip
+    //       .style("left", (event.pageX + 10) + "px")
+    //       .style("top", (event.pageY - 10) + "px");
+    //   })
+    //   .on("mouseout", (event) => {
+    //     d3.select(event.currentTarget).select("circle")
+    //       .attr("stroke", "#fff")
+    //       .attr("stroke-width", 1.5);
   
-        tooltip.transition().duration(500).style("opacity", 0);
-      });
+    //     tooltip.transition().duration(500).style("opacity", 0);
+    //   });
   
     // VARIANT NODES (depth === 2) — now showing correct variant tooltip
-    node.filter(d => d.depth === 2)
+    node.filter(d => d.depth === 1)
       .style("cursor", "pointer")
       .on("mouseover", (event, d) => {
         d3.select(event.currentTarget).select("circle")
