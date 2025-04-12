@@ -462,6 +462,7 @@ export class StackedBarVisualization extends VisualizationBase {
     const container = d3.select(`#${this.containerId}`);
     const navContainer = container.append("div")
       .attr("id", "viz2-pagination")
+      .attr("class", "pagination-container")
       .style("display", "flex");
 
     navContainer.append("button")
@@ -485,6 +486,7 @@ export class StackedBarVisualization extends VisualizationBase {
 
     const victoryNavContainer = container.append("div")
       .attr("id", "viz2-victory-pagination")
+      .attr("class", "pagination-container")
       .style("display", "none");
 
     victoryNavContainer.append("button")

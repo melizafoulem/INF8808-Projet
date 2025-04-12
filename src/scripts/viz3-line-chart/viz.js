@@ -426,6 +426,7 @@ export class LineChartVisualization extends VisualizationBase {
     const container = d3.select(`#${this.containerId}`);
     const nav = container.append('div')
       .attr('id', 'viz3-pagination')
+      .attr("class", "pagination-container")
       .style('display', 'flex')
       .style('gap', '12px')
       .style('margin-top', '20px');
