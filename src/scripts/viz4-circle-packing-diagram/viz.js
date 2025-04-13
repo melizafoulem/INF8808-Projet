@@ -18,10 +18,14 @@ export class CirclePackingVisualization {
       width: 1000,
       height: 800,
       padding: 3,
-      topOpenings: 10,
+      topOpeningsPerPage: 4,
       variationInflationFactor: 2.0, // Factor to inflate variation sizes for better visibility
       ...options
     };
+
+    this.currentPage = 0;
+    this.itemsPerPage = this.options.topOpeningsPerPage || 4;
+    this.fullOpeningFamilies = [];
 
     this.createTooltip();
   }
@@ -34,7 +38,7 @@ export class CirclePackingVisualization {
     const container = d3.select(`#${this.svgId}`);
     container.selectAll("*").remove(); // Clear previous content
   
-    const topOpenings = preprocess.getNOpeningVariations(data, this.options.topOpenings);
+    const topOpenings = preprocess.getNOpeningVariations(data);
     if (!topOpenings || Object.keys(topOpenings).length === 0) {
       this.showNoDataMessage();
       return;
@@ -66,10 +70,30 @@ export class CirclePackingVisualization {
     const grid = container.append("div")
       .attr("class", "circle-multiple-grid");
   
-    openingFamilies.forEach((family, i) => {
+    this.fullOpeningFamilies = openingFamilies;
+    this.currentPage = 0;
+    this.renderCurrentPage();
+    this.createPaginationControls();
+  }
+
+  renderCurrentPage() {
+    const container = d3.select(`#${this.svgId}`);
+    container.selectAll("*").remove();
+  
+    const grid = container.append("div").attr("class", "circle-multiple-grid");
+  
+    const start = this.currentPage * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    const familiesToShow = this.fullOpeningFamilies.slice(start, end);
+  
+    const colorScale = d3.scaleOrdinal()
+      .domain(this.fullOpeningFamilies.map(d => d.name))
+      .range(d3.schemeCategory10);
+  
+    familiesToShow.forEach(family => {
       const chart = grid.append("div").attr("class", "circle-multiple-chart");
   
-      this.appendTitleWithTooltip(chart, family);  
+      this.appendTitleWithTooltip(chart, family);
   
       const svg = chart.append("svg")
         .attr("width", 280)
@@ -78,6 +102,55 @@ export class CirclePackingVisualization {
       this.drawCirclePack(family, svg, colorScale(family.name));
     });
   }
+
+  createPaginationControls() {
+    const nav = d3.select("#viz4-pagination");
+    nav.html("");
+  
+    nav.append("button")
+      .attr("id", `${this.svgId}-prev`)
+      .attr("class", "primary-button")
+      .text("← Précédent")
+      .on("click", () => this.goToPreviousPage());
+  
+    nav.append("span")
+      .attr("id", `${this.svgId}-page-indicator`)
+      .style("align-self", "center");
+  
+    nav.append("button")
+      .attr("id", `${this.svgId}-next`)
+      .attr("class", "primary-button")
+      .text("Suivant →")
+      .on("click", () => this.goToNextPage());
+  
+    this.updatePaginationButtons();
+  }
+
+  goToPreviousPage() {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.renderCurrentPage();
+      this.updatePaginationButtons();
+    }
+  }
+  
+  goToNextPage() {
+    const maxPage = Math.floor(this.fullOpeningFamilies.length / this.itemsPerPage);
+    if (this.currentPage < maxPage) {
+      this.currentPage++;
+      this.renderCurrentPage();
+      this.updatePaginationButtons();
+    }
+  }
+  
+  updatePaginationButtons() {
+    const totalPages = Math.ceil(this.fullOpeningFamilies.length / this.itemsPerPage);
+    const pageText = `Page ${this.currentPage + 1} sur ${totalPages}`;
+  
+    d3.select(`#${this.svgId}-page-indicator`).text(pageText);
+    d3.select(`#${this.svgId}-prev`).attr("disabled", this.currentPage === 0 ? true : null).classed("disabled", this.currentPage === 0);
+    d3.select(`#${this.svgId}-next`).attr("disabled", this.currentPage >= totalPages - 1 ? true : null).classed("disabled", this.currentPage >= totalPages - 1);
+  }  
 
   drawCirclePack(familyData, svg, color) {
   const root = d3.hierarchy(familyData)
@@ -132,9 +205,7 @@ export class CirclePackingVisualization {
 
   // Keep the title tooltip for hover
   this.addCircleInteractions(node);
-}
-
-  
+} 
   
   /**
    * Create hierarchical data structure for circle packing
@@ -382,9 +453,6 @@ appendTitleWithTooltip(parent, family) {
         tooltip.transition().duration(500).style("opacity", 0);
       });
   }
-  
-  
-  
   
   /**
    * Create legend for openings

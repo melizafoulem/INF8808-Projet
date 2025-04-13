@@ -232,7 +232,7 @@ export class HeatmapVisualization extends VisualizationBase {
     legend.append('text')
       .attr('transform', `translate(${legendWidth / 2}, ${legendHeight + 30})`)
       .style('text-anchor', 'middle')
-      .text('Nombre de parties');
+      .text('% des parties');
   }
   
   /**

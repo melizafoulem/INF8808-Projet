@@ -147,11 +147,11 @@ export function getWinRateByOpeningAcrossEloRanges(data, n) {
 }
 
 
-export function getNOpeningVariations(data, n) {
+export function getNOpeningVariations(data) {
 
     const openings = data.reduce((acc, d) => {
         const parts = d.opening_name.split(/[:|]/);
-        const name = parts[0].trim().replace(/#\d+$/, '');
+        const name = parts[0].trim().replace(/#\d+$/, '').trim();
         const variation = parts[1] ? parts[1].trim() : null;
 
         if (!acc[name]) {
@@ -172,8 +172,7 @@ export function getNOpeningVariations(data, n) {
     }, {});
 
     const sortedOpenings = Object.entries(openings)
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, n);
+        .sort((a, b) => b[1].count - a[1].count);
 
     return sortedOpenings.reduce((acc, [name, details]) => {
         acc[name] = details;

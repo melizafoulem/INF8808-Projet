@@ -242,6 +242,13 @@
     align-items: center;
     overflow: visible;
   }
+
+  #viz4 {
+    width: 100%;
+    height: auto;
+    align-items: center;
+    overflow: visible;
+  }
   
   svg {
     max-width: 100%;
