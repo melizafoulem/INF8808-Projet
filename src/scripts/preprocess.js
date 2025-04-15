@@ -258,137 +258,119 @@ export function getTimeControlOptions(data) {
 
 // De plus, modifions la fonction getOpeningUsageByElo pour utiliser cette estimation
 export function getOpeningUsageByElo(data, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
-    // Normaliser les données pour garantir que rated est un booléen
-    const processedData = data.map(d => {
-        // Convertir rated en booléen (peut être une chaîne "true"/"false" dans le CSV)
-        const ratedValue = typeof d.rated === 'string' 
-            ? d.rated.toLowerCase() === 'true' 
-            : !!d.rated;
-
-        const ratedType = ratedValue ? 'rated' : 'casual'
-        
-        return {
-            ...d,
-            ratedType: ratedType
-        };
-    });
-    
+    const filteredData = [];
     const openingCounts = {};
-    processedData.forEach(d => {
-        // Vérifier si la partie correspond aux filtres
-        if ((filterType !== null && d.ratedType !== filterType) || 
-            (timeControl !== null && d.estimated_time_control !== timeControl)) {
-            return;
-        }
-        
-        const name = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
-        openingCounts[name] = (openingCounts[name] || 0) + 1;
-    });
-
-    let topOpenings;
     
-    if (sortBy === 'popularity') {
-        topOpenings = Object.entries(openingCounts)
-            .sort((a, b) => b[1] - a[1])
-            .map(([name]) => name);
-    } else if (sortBy === 'name') {
-        topOpenings = Object.entries(openingCounts)
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map(([name]) => name);
+    for (const d of data) {
+      const ratedValue = typeof d.rated === 'string'
+        ? d.rated.toLowerCase() === 'true'
+        : !!d.rated;
+  
+      const ratedType = ratedValue ? 'rated' : 'casual';
+      const effectiveTimeControl = d.time_control || d.estimated_time_control;
+      const opening = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
+  
+      if ((filterType !== null && ratedType !== filterType) ||
+          (timeControl !== null && effectiveTimeControl !== timeControl)) {
+        continue;
+      }
+  
+      filteredData.push({
+        ...d,
+        ratedType,
+        effectiveTimeControl,
+        cleanedOpening: opening,
+      });
+  
+      openingCounts[opening] = (openingCounts[opening] || 0) + 1;
     }
-    
-    if (!topOpenings || topOpenings.length === 0) {
-        return {
-            data: [],
-            openings: [],
-            eloRanges: []
-        };
-    }
-
-    const filteredData = processedData.filter(d => {
-        const name = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
-        const effectiveTimeControl = d.time_control || d.estimated_time_control;
-        
-        // Appliquer les filtres
-        if ((filterType !== null && d.ratedType !== filterType) || 
-            (timeControl !== null && effectiveTimeControl !== timeControl)) {
-            return false;
-        }
-        
-        return topOpenings.includes(name);
-    });
-    
+  
     if (filteredData.length === 0) {
-        return {
-            data: [],
-            openings: [],
-            eloRanges: []
-        };
+      return { data: [], openings: [], eloRanges: [] };
     }
-
-    const elos = filteredData.flatMap(d => [d.white_rating, d.black_rating]);
+  
+    let topOpenings = Object.entries(openingCounts)
+      .sort((a, b) => {
+        if (sortBy === 'name') return a[0].localeCompare(b[0]);
+        return b[1] - a[1];
+      })
+      .map(([name]) => name);
+  
+    if (topOpenings.length === 0) {
+      return { data: [], openings: [], eloRanges: [] };
+    }
+  
+    const heatmapData = [];
+    const grouped = {};
+  
+    const elos = [];
+  
+    for (const d of filteredData) {
+      const opening = d.cleanedOpening;
+      if (!topOpenings.includes(opening)) continue;
+  
+      const whiteElo = Math.floor(d.white_rating / 100) * 100;
+      const blackElo = Math.floor(d.black_rating / 100) * 100;
+  
+      const whiteRange = `${whiteElo}-${whiteElo + 99}`;
+      const blackRange = `${blackElo}-${blackElo + 99}`;
+  
+      elos.push(whiteElo, blackElo);
+  
+      if (!grouped[opening]) grouped[opening] = {};
+      if (!grouped[opening][whiteRange]) grouped[opening][whiteRange] = { count: 0, whiteCount: 0, blackCount: 0 };
+      if (!grouped[opening][blackRange]) grouped[opening][blackRange] = { count: 0, whiteCount: 0, blackCount: 0 };
+  
+      if (colorFilter === 'white' || colorFilter === 'both') {
+        grouped[opening][whiteRange].count++;
+        grouped[opening][whiteRange].whiteCount++;
+      }
+      if (colorFilter === 'black' || colorFilter === 'both') {
+        grouped[opening][blackRange].count++;
+        grouped[opening][blackRange].blackCount++;
+      }
+    }
+  
+    if (elos.length === 0) {
+      return { data: [], openings: [], eloRanges: [] };
+    }
+  
     const minElo = Math.floor(Math.min(...elos) / 100) * 100;
     const maxElo = Math.ceil(Math.max(...elos) / 100) * 100;
-
-    const heatmapData = [];
     const eloRanges = [];
-
     for (let elo = minElo; elo < maxElo; elo += 100) {
-        const rangeKey = `${elo}-${elo + 99}`;
-        eloRanges.push(rangeKey);
-        
-        for (const opening of topOpenings) {
-            let whiteGames = 0;
-            let blackGames = 0;
-            
-            if (colorFilter === 'both' || colorFilter === 'white') {
-                whiteGames = filteredData.filter(d => {
-                    return d.white_rating >= elo && 
-                           d.white_rating < elo + 100 && 
-                           d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '') === opening;
-                }).length;
-            }
-            
-            if (colorFilter === 'both' || colorFilter === 'black') {
-                blackGames = filteredData.filter(d => {
-                    return d.black_rating >= elo && 
-                           d.black_rating < elo + 100 && 
-                           d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '') === opening;
-                }).length;
-            }
-            
-            heatmapData.push({
-                eloRange: rangeKey,
-                opening: opening,
-                count: whiteGames + blackGames,
-                whiteCount: whiteGames,
-                blackCount: blackGames
-            });
-        }
+      eloRanges.push(`${elo}-${elo + 99}`);
     }
 
-    const groupedByElo = {};
-    for (const d of heatmapData) {
-        if (!groupedByElo[d.eloRange]) {
-            groupedByElo[d.eloRange] = [];
-        }
-        groupedByElo[d.eloRange].push(d);
+    for (const eloRange of eloRanges) {
+      let totalCount = 0;
+  
+      for (const opening of topOpenings) {
+        const stats = grouped[opening]?.[eloRange] || { count: 0, whiteCount: 0, blackCount: 0 };
+        totalCount += stats.count;
+      }
+  
+      for (const opening of topOpenings) {
+        const stats = grouped[opening]?.[eloRange] || { count: 0, whiteCount: 0, blackCount: 0 };
+  
+        heatmapData.push({
+          eloRange,
+          opening,
+          count: stats.count,
+          whiteCount: stats.whiteCount,
+          blackCount: stats.blackCount,
+          relativeCount: totalCount > 0 ? (stats.count / totalCount) * 100 : 0
+        });
+      }
     }
-
-    for (const eloRange in groupedByElo) {
-        const group = groupedByElo[eloRange];
-        const total = d3.sum(group, d => d.count);
-        for (const d of group) {
-            d.relativeCount = total > 0 ? (d.count / total) * 100 : 0;
-        }
-    }
-
+  
     return {
-        data: heatmapData,
-        openings: topOpenings,
-        eloRanges: eloRanges
+      data: heatmapData,
+      openings: topOpenings,
+      eloRanges: eloRanges
     };
 }
+  
 
 export function getEloRange(data) {
     const elos = data.flatMap(d => [d.white_rating, d.black_rating]);
