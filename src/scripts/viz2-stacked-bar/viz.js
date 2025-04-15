@@ -125,7 +125,7 @@ export class StackedBarVisualization extends VisualizationBase {
       .padding(0.3);
   
     this.createXAxis(xScale, 'Pourcentage (%)');
-    this.createYAxis(yScale, 'Ouverture');
+    this.createYAxis(yScale, '');
   
     return { xScale, yScale };
   }
@@ -359,7 +359,7 @@ export class StackedBarVisualization extends VisualizationBase {
         .text('Afficher la répartition des victoires');
       
       this.graphGroup.selectAll('.y-axis').remove();
-      this.createYAxis(this.yScaleVictory, 'Ouverture');
+      this.createYAxis(this.yScaleVictory, '');
 
       d3.select("#viz2-pagination").style("display", "none");
       d3.select("#viz2-victory-pagination").style("display", "flex");
@@ -389,7 +389,7 @@ export class StackedBarVisualization extends VisualizationBase {
         .text('Afficher les statistiques de l\'état de la victoire');
 
       this.graphGroup.selectAll('.y-axis').remove();
-      this.createYAxis(this.yScaleWins, 'Ouverture');
+      this.createYAxis(this.yScaleWins, '');
 
       d3.select("#viz2-pagination").style("display", "flex");
       d3.select("#viz2-victory-pagination").style("display", "none");
@@ -448,7 +448,7 @@ export class StackedBarVisualization extends VisualizationBase {
   
     this.victoryStatusGroup.selectAll('*').remove();
     this.drawVictoryStatusChart(paginatedData, xScale, yScale);
-    this.createYAxis(this.yScaleVictory, 'Ouverture');
+    this.createYAxis(this.yScaleVictory, '');
     this.updateVictoryPageIndicator();
   
     d3.select("#prev-victory-page").attr("disabled", this.currentVictoryPage === 0 ? true : null).classed("disabled", this.currentVictoryPage === 0);

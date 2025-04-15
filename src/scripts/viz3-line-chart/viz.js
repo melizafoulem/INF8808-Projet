@@ -146,7 +146,7 @@ export class LineChartVisualization extends VisualizationBase {
       .range(this.options.colorScheme);
     
     // Create axes
-    this.createXAxis(xScale, 'Classement Elo')
+    this.createXAxis(xScale)
       .selectAll('text')
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end')

@@ -134,6 +134,8 @@ export class VisualizationBase {
           .attr('x', this.graphSize.width / 2)
           .attr('y', 40)
           .style('text-anchor', 'middle')
+          .style('font-size', '14px')
+          .style('fill', '#000')
           .text(label);
       }
       
@@ -157,8 +159,10 @@ export class VisualizationBase {
           .attr('class', 'axis-label')
           .attr('transform', 'rotate(-90)')
           .attr('x', -this.graphSize.height / 2)
-          .attr('y', -40)
+          .attr('y',  -40)
           .style('text-anchor', 'middle')
+          .style('font-size', '14px')
+          .style('fill', '#000')
           .text(label);
       }
       

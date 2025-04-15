@@ -103,7 +103,7 @@ export class HeatmapVisualization extends VisualizationBase {
       .attr('dx', '-.8em')
       .attr('dy', '.15em');
     
-    this.createYAxis(yScale, 'Ouverture');
+    this.createYAxis(yScale, '');
   
     // Create heatmap cells
     this.graphGroup.selectAll('rect')
