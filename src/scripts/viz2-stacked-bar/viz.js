@@ -73,8 +73,6 @@ export class StackedBarVisualization extends VisualizationBase {
     this.currentPage = 0;
     this.fullResultsData = topOpeningResults
     this.currentVictoryPage = 0;
-
-    this.updatePaginatedData();
     
     // Set initial chart title
     this.setTitle("Répartition des victoires par ouverture");
@@ -93,6 +91,7 @@ export class StackedBarVisualization extends VisualizationBase {
     // Draw both chart types
     this.drawWinsByColorChart(topOpeningWinners, xScale, yScaleWins);
     this.updateVictoryPaginatedData();
+    this.updatePaginatedData();
     
     // Setup toggle button
     this.setupToggleButton();
