@@ -617,6 +617,18 @@ h2 {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr));
   gap: 30px;
 }
+
 #viz3-container {
   grid-column: 1 / -1;
+}
+
+#viz4-container {
+  grid-column: 1 / -1;
+}
+
+#viz4 {
+  max-height: 700px;
+  overflow-y: auto;
+  padding-right: 10px;
+  box-sizing: border-box;
 }
