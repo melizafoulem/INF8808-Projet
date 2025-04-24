@@ -19,7 +19,7 @@ export class StackedBarVisualization extends VisualizationBase {
 
     this.options = {
       ...this.options,
-      numOpenings: 100,
+      numOpenings: 1000,
       ...options
     }
 
@@ -294,7 +294,7 @@ export class StackedBarVisualization extends VisualizationBase {
    * Show message when no data is available or usable
    *
    * @param {string} [message] - Optional custom message
-  */
+   */
   showNoDataMessage (message = 'Aucune donnée disponible pour les filtres sélectionnés') {
     if (!this.graphGroup) {
       console.error('Graph group not initialized for no data message.')
