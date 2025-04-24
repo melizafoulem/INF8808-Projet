@@ -580,11 +580,23 @@ export class StackedBarVisualization extends VisualizationBase {
  * @param {Object} graphSize - Size of the graph
  */
 export function drawViz(data, svgSize, margin, graphSize) {
-  const stackedBar = new StackedBarVisualization('viz2', {
+  // — Chart 1: wins by color —
+  const winsViz = new StackedBarVisualization("viz2-wins", {
     width: svgSize.width,
     height: svgSize.height,
-    margin: margin
+    margin,
+    numOpenings: 10,
   });
-  
-  stackedBar.draw(data);
+  // draw the default “wins” layout
+  winsViz.draw(data);
+
+  const victoryViz = new StackedBarVisualization("viz2-victory", {
+    width: svgSize.width,
+    height: svgSize.height,
+    margin,
+    numOpenings: 10,
+  });
+  // draw the full component, then flip it into “victory-status” mode
+  victoryViz.draw(data);
+  victoryViz.toggleChartType();
 }

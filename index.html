@@ -183,39 +183,20 @@
 
         <!-- Visualization 2: Stacked Bar Chart -->
         <section class="viz-card" id="viz2-container">
-          <h3>Taux de victoire par ouverture selon la couleur</h3>
+          <h3>Taux de victoire par ouverture</h3>
           <p class="viz-description">
-            Quelle couleur prend l'avantage selon l'ouverture jouée ? Certaines
-            ouvertures favorisent clairement les noirs ou les blancs.
+            Quelle couleur prend l'avantage selon l'ouverture jouée ? Et comment
+            se répartissent les états de victoire (échec et mat, abandon, etc.)
+            ?
           </p>
-
-          <div class="viz-controls">
-            <button id="toggle-victory-chart" class="secondary-button">
-              Afficher les statistiques de l'état de la victoire
-            </button>
-          </div>
-
-          <div id="viz2">
-            <h4 id="viz2-chart-title" class="chart-title"></h4>
-
-            <div class="viz2-container" id="viz2-stacked-bar-container">
-              <div class="graph" id="viz2-stacked-bar"></div>
-              <div id="viz2-legend-wrapper">
-                <div class="legend-container" id="viz2-legend"></div>
-                <div
-                  class="legend-container"
-                  id="viz2-victory-legend"
-                  style="display: none; opacity: 0"
-                ></div>
-              </div>
+          <div id="stacked-charts" style="display: flex; gap: 40px">
+            <div class="chart-wrapper" style="flex: 1">
+              <h4>Répartition des victoires par ouverture</h4>
+              <div id="viz2-wins"></div>
             </div>
-
-            <div
-              class="viz2-container"
-              id="viz2-victory-status-container"
-              style="display: none; opacity: 0"
-            >
-              <div class="graph" id="viz2-victory-status"></div>
+            <div class="chart-wrapper" style="flex: 1">
+              <h4>Répartition des états de la victoire</h4>
+              <div id="viz2-victory"></div>
             </div>
           </div>
         </section>

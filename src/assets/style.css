@@ -646,3 +646,7 @@ h2 {
 #viz5-container {
   grid-column: 1 / -1;
 }
+
+#viz2-container {
+  grid-column: 1 / -1;
+}
