@@ -15,23 +15,18 @@ export class StackedBarVisualization extends VisualizationBase {
    * @param {string} chartType - Type of chart to display ('wins' or 'victory')
    */
   constructor (containerId, options = {}, chartType = 'wins') {
-    // Call parent constructor
     super(containerId, options)
 
-    // Stacked bar specific options
     this.options = {
       ...this.options,
-      numOpenings: 100, // Default number of openings to display
+      numOpenings: 100,
       ...options
     }
 
-    // Ensure margin is properly initialized
     this.margin = this.options.margin || { top: 50, right: 50, bottom: 50, left: 80 }
 
-    // Chart type (wins or victory)
     this.chartType = chartType
 
-    // References to chart elements
     this.chartGroup = null
     this.legendData = null
   }
@@ -40,10 +35,8 @@ export class StackedBarVisualization extends VisualizationBase {
    * Initialize the visualization
    */
   initialize () {
-    // Call parent initialize
     super.initialize()
 
-    // Create group for the chart
     this.chartGroup = this.graphGroup.append('g')
       .attr('class', `${this.chartType}-chart-group`)
   }
@@ -54,10 +47,8 @@ export class StackedBarVisualization extends VisualizationBase {
    * @param {Array} data - Chess games dataset
    */
   draw (data) {
-    // Initialize SVG
     this.initialize()
 
-    // Preprocess data based on chart type
     let processedData, title
     if (this.chartType === 'wins') {
       processedData = preprocess.getTopNOpeningsWinners(data, this.options.numOpenings)
@@ -69,19 +60,20 @@ export class StackedBarVisualization extends VisualizationBase {
       title = 'Répartition des états de la victoire'
     }
 
-    // Set title
+    if (processedData.length === 0) {
+      this.showNoDataMessage()
+      return
+    }
+
     this.setTitle(title)
 
-    // Create scales and axes
     const names = processedData.map(d => d.name)
 
-    // Determine if we should use horizontal layout based on number of items
     const useHorizontal = this.options.isHorizontal || names.length > 15
     this.useHorizontal = useHorizontal
 
     let xScale, yScale
     if (useHorizontal) {
-      // Horizontal layout - X and Y are flipped
       xScale = d3.scaleLinear()
         .domain([0, 100])
         .range([0, this.graphSize.width])
@@ -89,33 +81,30 @@ export class StackedBarVisualization extends VisualizationBase {
       yScale = d3.scaleBand()
         .domain(names)
         .range([0, this.graphSize.height])
-        .padding(0.25) // Adjusted padding for optimal spacing
+        .padding(0.25)
 
       this.createXAxis(xScale, 'Pourcentage (%)')
       this.createYAxis(yScale, '')
     } else {
-      // Vertical layout - traditional bar chart
       xScale = d3.scaleBand()
         .domain(names)
         .range([0, this.graphSize.width])
-        .padding(0.4) // Increased padding here as well
+        .padding(0.4)
 
       yScale = d3.scaleLinear()
-        .domain([100, 0]) // Reversed to start from top
+        .domain([100, 0])
         .range([0, this.graphSize.height])
 
       this.createXAxis(xScale, '')
       this.createYAxis(yScale, 'Pourcentage (%)')
     }
 
-    // Draw the appropriate chart based on chartType
     if (this.chartType === 'wins') {
       this.drawWinsByColorChart(processedData, xScale, yScale)
     } else {
       this.drawVictoryStatusChart(processedData, xScale, yScale)
     }
 
-    // Create legend
     this.createLegend()
   }
 
@@ -127,12 +116,10 @@ export class StackedBarVisualization extends VisualizationBase {
    * @param {Function} yScale - Y scale
    */
   drawWinsByColorChart (data, xScale, yScale) {
-    // Color scale for wins by color
     const colorScale = d3.scaleOrdinal()
       .domain(['whiteWinPct', 'drawPct', 'blackWinPct'])
       .range(['#D3D3D3', '#4287f5', '#2E2E2E'])
 
-    // Create stacked data
     const stack = d3.stack()
       .keys(['whiteWinPct', 'drawPct', 'blackWinPct'])
       .order(d3.stackOrderNone)
@@ -140,7 +127,6 @@ export class StackedBarVisualization extends VisualizationBase {
 
     const series = stack(data)
 
-    // Draw stacked bars
     this.chartGroup.selectAll('.series')
       .data(series)
       .enter()
@@ -156,12 +142,10 @@ export class StackedBarVisualization extends VisualizationBase {
       .attr('width', d => xScale(d[1]) - xScale(d[0]))
       .attr('height', yScale.bandwidth())
       .on('mouseover', (event, d) => {
-        // Highlight bar
         d3.select(event.target)
           .attr('stroke', '#333')
           .attr('stroke-width', 2)
 
-        // Show tooltip
         const value = d[1] - d[0]
         const key = d3.select(event.target.parentNode).datum().key
         const label = key === 'whiteWinPct' ? 'Victoires blancs'
@@ -177,7 +161,6 @@ export class StackedBarVisualization extends VisualizationBase {
         this.moveTooltip(event)
       })
       .on('mouseout', (event) => {
-        // Remove highlight
         d3.select(event.target)
           .attr('stroke', null)
           .attr('stroke-width', null)
@@ -185,7 +168,6 @@ export class StackedBarVisualization extends VisualizationBase {
         this.hideTooltip()
       })
 
-    // Store legend data
     this.legendData = [
       { key: 'whiteWinPct', label: 'Victoire des blancs %', color: colorScale('whiteWinPct') },
       { key: 'drawPct', label: 'Égalité %', color: colorScale('drawPct') },
@@ -201,12 +183,10 @@ export class StackedBarVisualization extends VisualizationBase {
    * @param {Function} yScale - Y scale
    */
   drawVictoryStatusChart (data, xScale, yScale) {
-    // Color scale for victory status
     const colorScale = d3.scaleOrdinal()
       .domain(['matePct', 'resignPct', 'outoftimePct', 'drawPct'])
       .range(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'])
 
-    // Create stacked data
     const stack = d3.stack()
       .keys(['matePct', 'resignPct', 'outoftimePct', 'drawPct'])
       .order(d3.stackOrderNone)
@@ -214,7 +194,6 @@ export class StackedBarVisualization extends VisualizationBase {
 
     const series = stack(data)
 
-    // Draw stacked bars
     this.chartGroup.selectAll('.series')
       .data(series)
       .enter()
@@ -230,12 +209,10 @@ export class StackedBarVisualization extends VisualizationBase {
       .attr('width', d => xScale(d[1]) - xScale(d[0]))
       .attr('height', yScale.bandwidth())
       .on('mouseover', (event, d) => {
-        // Highlight bar
         d3.select(event.target)
           .attr('stroke', '#333')
           .attr('stroke-width', 2)
 
-        // Show tooltip
         const value = d[1] - d[0]
         const key = d3.select(event.target.parentNode).datum().key
         const label = key === 'matePct' ? 'Échec et mat'
@@ -252,7 +229,6 @@ export class StackedBarVisualization extends VisualizationBase {
         this.moveTooltip(event)
       })
       .on('mouseout', (event) => {
-        // Remove highlight
         d3.select(event.target)
           .attr('stroke', null)
           .attr('stroke-width', null)
@@ -260,7 +236,6 @@ export class StackedBarVisualization extends VisualizationBase {
         this.hideTooltip()
       })
 
-    // Store legend data
     this.legendData = [
       { key: 'matePct', label: 'Échec et mat %', color: colorScale('matePct') },
       { key: 'resignPct', label: 'Abandon %', color: colorScale('resignPct') },
@@ -273,16 +248,12 @@ export class StackedBarVisualization extends VisualizationBase {
    * Create legend for the chart
    */
   createLegend () {
-    // Create or find the legend container
     const legendId = `${this.containerId}-legend`
     let legend = d3.select(`#${legendId}`)
 
-    // If the legend container doesn't exist, create it
     if (legend.empty()) {
-      // Find the container element
       const container = d3.select(`#${this.containerId}`).node().parentNode
 
-      // Create a div for the legend
       legend = d3.select(container)
         .append('div')
         .attr('id', legendId)
@@ -295,11 +266,9 @@ export class StackedBarVisualization extends VisualizationBase {
         .style('border-radius', '5px')
         .style('background', 'rgba(255,255,255,0.9)')
     } else {
-      // Clear existing legend
       legend.html('')
     }
 
-    // Add legend items
     this.legendData.forEach(item => {
       const legendItem = legend.append('div')
         .attr('class', 'legend-item')
@@ -319,6 +288,30 @@ export class StackedBarVisualization extends VisualizationBase {
         .style('font-size', '12px')
         .text(item.label)
     })
+  }
+
+  /**
+   * Show message when no data is available or usable
+   *
+   * @param {string} [message] - Optional custom message
+  */
+  showNoDataMessage (message = 'Aucune donnée disponible pour les filtres sélectionnés') {
+    if (!this.graphGroup) {
+      console.error('Graph group not initialized for no data message.')
+      return
+    }
+    this.graphGroup.selectAll('*').remove()
+
+    this.graphGroup
+      .append('text')
+      .attr('class', 'no-data-message')
+      .attr('x', this.graphSize.width / 2)
+      .attr('y', this.graphSize.height / 2)
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.35em')
+      .style('font-size', '16px')
+      .style('fill', '#666')
+      .text(message)
   }
 
   /**
@@ -342,13 +335,13 @@ export class StackedBarVisualization extends VisualizationBase {
  * @param {object} graphSize - Size of the graph
  */
 export function drawViz (data, svgSize, margin, graphSize) {
-  // Adjust SVG height to use more of the available space
   const extendedSvgSize = {
     width: svgSize.width,
-    height: Math.max(svgSize.height, 150 * 15 + margin.top + margin.bottom)
+    height: Math.max(svgSize.height, Math.min(150 * 15 + margin.top + margin.bottom, data.length * 10 + margin.top + margin.bottom))
   }
 
-  // Chart 1: Wins by color
+  console.log('extendedSvgSize', extendedSvgSize)
+
   const winsViz = new StackedBarVisualization('viz2-wins', {
     width: extendedSvgSize.width,
     height: extendedSvgSize.height,
@@ -357,7 +350,6 @@ export function drawViz (data, svgSize, margin, graphSize) {
   }, 'wins')
   winsViz.draw(data)
 
-  // Chart 2: Victory states
   const victoryViz = new StackedBarVisualization('viz2-victory', {
     width: extendedSvgSize.width,
     height: extendedSvgSize.height,

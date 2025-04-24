@@ -39,19 +39,15 @@ export class LineChartVisualization extends VisualizationBase {
    * @param {Array} data - Chess games dataset
    */
   draw (data) {
-    // Initialize SVG (assuming this sets up SVG, main group, and potentially recalculates graphSize if needed)
     this.initialize()
 
-    // Set chart title
     this.setTitle('Taux de performance des ouvertures')
 
-    // Preprocess data for line chart
     const openingsData = preprocess.getWinRateByOpeningAcrossEloRanges(
       data,
       this.options.numOpenings
     )
 
-    // Check if data exists
     if (!openingsData || openingsData.length === 0 || openingsData.every(d => !d.openings || d.openings.length === 0)) {
       this.showNoDataMessage()
       return
@@ -61,35 +57,27 @@ export class LineChartVisualization extends VisualizationBase {
       d.openings = d.openings.slice(0, this.options.numOpenings)
     })
 
-    // Extract openings and format data for line chart
     const openings = this.extractOpenings(openingsData)
     const formattedData = this.formatDataForLineChart(openingsData, openings)
 
-    // Check if formatted data exists after filtering
     if (formattedData.length === 0) {
       this.showNoDataMessage('Aucune donnée significative après filtrage.')
       return
     }
 
-    // Create scales
     const { xScale, yScale, colorScale } = this.createScales(
       openingsData,
       formattedData
     )
 
-    // Add background grid
     this.drawGrid(xScale, yScale)
 
-    // Draw reference line at 50%
     this.drawReferenceLine(yScale)
 
-    // Draw lines
     this.drawLines(formattedData, xScale, yScale, colorScale)
 
-    // Draw points
     this.drawPoints(formattedData, xScale, yScale, colorScale)
 
-    // Add legend
     this.createLineChartLegend(formattedData, colorScale)
   }
 
@@ -411,24 +399,12 @@ export class LineChartVisualization extends VisualizationBase {
    * @returns {string} - HTML content for tooltip
    */
   createTooltipContent (opening, dataPoint) {
-    const openingColor = d3.select(`.line-${this.sanitizeClassName(opening.name)}`).attr('stroke') || this.options.colorScheme[0] // Fallback color
+    const openingColor = d3.select(`.line-${this.sanitizeClassName(opening.name)}`).attr('stroke') || this.options.colorScheme[0]
 
-    const getBrightness = (hexColor) => {
-      try {
-        const rgb = d3.color(hexColor)
-        if (!rgb) return 128
-        return (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000
-      } catch (e) {
-        console.error('Error parsing color:', hexColor, e)
-        return 128
-      }
-    }
-
-    const brightness = getBrightness(openingColor)
-    const textColor = brightness > 128 ? '#333' : '#fff'
-    const subTextColor = brightness > 128 ? '#555' : '#eee'
-    const subBgColor = brightness > 128 ? '#f8f8f8' : 'rgba(255,255,255,0.1)'
-    const borderColor = brightness > 128 ? '#eee' : 'rgba(255,255,255,0.2)'
+    const textColor = '#333'
+    const subTextColor = '#555'
+    const subBgColor = '#f8f8f8'
+    const borderColor = '#eee'
 
     const warningMsg = dataPoint.total < 10
       ? `<div style="background: rgba(255, 236, 179, 0.8); color: #b16e00; padding: 4px 8px; font-size: 11px; text-align: center; border-top: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; margin: 5px 0;"><span style="margin-right: 5px;">⚠️</span>Donnée peu significative (${dataPoint.total} parties)</div>`
