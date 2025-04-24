@@ -632,3 +632,17 @@ h2 {
   padding-right: 10px;
   box-sizing: border-box;
 }
+
+#scatter-container {
+  display: flex;
+  gap: 20px;
+  /* align-items: flex-start;  or center, as you prefer */
+}
+
+#scatter-container > div {
+  flex: 1; /* makes each child take equal width */
+}
+
+#viz5-container {
+  grid-column: 1 / -1;
+}

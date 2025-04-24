@@ -254,14 +254,17 @@
             simple...
           </p>
 
-          <div class="viz-controls">
-            <button id="viz5-toggle-x-axis" class="secondary-button">
-              Afficher le nombre moyen de tours
-            </button>
-          </div>
-
-          <div id="viz5">
-            <h4 id="viz5-chart-title" class="chart-title"></h4>
+          <div id="scatter-container" style="display: flex; gap: 20px">
+            <!-- Ply plot -->
+            <div class="scatter-wrapper">
+              <h4 id="viz5-ply-chart-title" class="chart-title"></h4>
+              <div id="viz5-ply"></div>
+            </div>
+            <!-- Turns plot -->
+            <div class="scatter-wrapper">
+              <h4 id="viz5-turns-chart-title" class="chart-title"></h4>
+              <div id="viz5-turns"></div>
+            </div>
           </div>
         </section>
       </div>
