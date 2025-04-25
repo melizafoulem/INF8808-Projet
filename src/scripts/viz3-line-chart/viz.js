@@ -447,64 +447,28 @@ export class LineChartVisualization extends VisualizationBase {
    * @returns {string} - HTML content for tooltip
    */
   createTooltipContent (opening, dataPoint) {
-    const openingColor =
-      d3
-        .select(`.line-${this.sanitizeClassName(opening.name)}`)
-        .attr('stroke') || this.options.colorScheme[0]
-
-    const textColor = '#333'
-    const subTextColor = '#555'
-    const subBgColor = '#f8f8f8'
-    const borderColor = '#eee'
-
-    const warningMsg =
-      dataPoint.total < 10
-        ? `<div style="background: rgba(255, 236, 179, 0.8); color: #b16e00; padding: 4px 8px; font-size: 11px; text-align: center; border-top: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor}; margin: 5px 0;"><span style="margin-right: 5px;">⚠️</span>Donnée peu significative (${dataPoint.total} parties)</div>`
-        : ''
-
-    const formatPct = (val) =>
-      typeof val === 'number' ? val.toFixed(1) : 'N/A'
-    const whitePct = formatPct(dataPoint.whiteWinPct)
-    const drawPct = formatPct(dataPoint.drawPct)
-    const blackPct = formatPct(dataPoint.blackWinPct)
-
     return `
-      <div style="background: #fff; border-radius: 5px; box-shadow: 0 3px 12px rgba(0,0,0,0.2); overflow: hidden; width: 230px; font-family: sans-serif; line-height: 1.4;">
-        <div style="background: ${openingColor}; color: ${textColor}; padding: 8px 12px; font-weight: bold; font-size: 14px; border-bottom: 1px solid rgba(0,0,0,0.1);">
-          ${this.truncateName(opening.name, 30)} </div>
-        ${warningMsg}
-        <div style="padding: 10px 12px;">
-          <div style="font-size: 13px; color: #555; margin-bottom: 8px; display: flex; justify-content: space-between;">
-            <span>Plage Elo:</span>
-            <span style="font-weight: bold;">${dataPoint.range}</span>
-          </div>
-
-          <div style="background: ${subBgColor}; border-radius: 4px; padding: 8px; margin-bottom: 10px;">
-            <div style="margin-bottom: 6px; font-size: 12px; color: ${subTextColor};">Résultats :</div>
-            <div style="display: flex; height: 10px; width: 100%; border-radius: 3px; overflow: hidden; margin-bottom: 8px; border: 1px solid ${borderColor};">
-              <div title="Blancs: ${whitePct}%" style="background: #4CAF50; width: ${
-      dataPoint.whiteWinPct
-    }%;"></div>
-              <div title="Nuls: ${drawPct}%" style="background: #FFC107; width: ${
-      dataPoint.drawPct
-    }%;"></div>
-              <div title="Noirs: ${blackPct}%" style="background: #F44336; width: ${
-      dataPoint.blackWinPct
-    }%;"></div>
-            </div>
-            <div style="display: flex; font-size: 11px; color: ${subTextColor}; justify-content: space-between;">
-              <div><span style="color: #4CAF50;">■</span> ${whitePct}%</div>
-              <div><span style="color: #FFC107;">■</span> ${drawPct}%</div>
-              <div><span style="color: #F44336;">■</span> ${blackPct}%</div>
-            </div>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #555; border-top: 1px solid ${borderColor}; padding-top: 8px;">
-            <span>Parties jouées:</span>
-            <span style="font-weight: bold;">${dataPoint.total}</span>
-          </div>
-        </div>
-      </div>
+      ${dataPoint.total < 10 ? '<div style="color:red; margin-bottom: 5px;">⚠ Donnée peu significative (peu de parties)</div>' : ''}
+      <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${opening.name}</div>
+      <div style="margin-bottom: 8px; font-size: 11px; color: #777;">${dataPoint.range}</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Victoire Blancs:</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${dataPoint.whiteWinPct.toFixed(2)}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Victoire Noirs:</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right;">${dataPoint.blackWinPct.toFixed(2)}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0;">Égalité:</td>
+          <td style="padding: 4px 0; text-align: right;">${dataPoint.drawPct.toFixed(2)}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; border-top: 1px solid #eee;">Total parties:</td>
+          <td style="padding: 4px 0; border-top: 1px solid #eee; text-align: right;">${dataPoint.total}</td>
+        </tr>
+      </table>
     `
   }
 
