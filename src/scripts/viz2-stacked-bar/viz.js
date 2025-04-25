@@ -163,9 +163,9 @@ export class StackedBarVisualization extends VisualizationBase {
         const key = d3.select(event.target.parentNode).datum().key
         const label =
           key === 'whiteWinPct'
-            ? 'Victoires blancs'
+            ? 'Victoires des blancs'
             : key === 'blackWinPct'
-              ? 'Victoires noirs'
+              ? 'Victoires des noirs'
               : 'Égalités'
 
         this.showTooltip(

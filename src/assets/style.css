@@ -278,6 +278,7 @@ svg.visualization {
   font-size: 12px;
   max-width: 250px;
   z-index: 100;
+  text-align: center;
 }
 
 .legend-container {
