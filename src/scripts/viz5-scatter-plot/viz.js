@@ -1,110 +1,249 @@
 import * as preprocess from '../preprocess.js'
-import * as d3 from 'd3'
+import { VisualizationBase } from '../visualization-base.js'
 
-export function drawViz (data, svgSize, margin, graphSize) {
-  const openingStats = preprocess.getOpeningStats(data)
-  console.log(openingStats)
+/**
+ * Scatter Plot visualization for opening performance vs. length
+ *
+ * @augments VisualizationBase
+ */
+export class ScatterPlotVisualization extends VisualizationBase {
+  /**
+   * Create a new scatter plot visualization
+   *
+   * @param {string} containerId - ID of the container element
+   * @param {object} options - Visualization options
+   */
+  constructor (containerId, options = {}) {
+    super(containerId, options)
 
-  d3.select('#viz5-chart-title')
-    .text("Taux de performance des ouvertures selon le nombre de coups durant l'ouverture")
-
-  const svg = d3.select('#viz5')
-    .append('svg')
-    .attr('width', svgSize.width)
-    .attr('height', svgSize.height)
-
-  let xAttribute = 'averagePly'
-
-  function updateChart () {
-    const xScale = d3.scaleLinear()
-      .domain([d3.min(openingStats, d => d[xAttribute]), d3.max(openingStats, d => d[xAttribute])])
-      .range([margin.left, graphSize.width - margin.right])
-
-    const yScale = d3.scaleLinear()
-      .domain([0, 100])
-      .range([graphSize.height - margin.bottom, margin.top])
-
-    const xAxis = d3.axisBottom(xScale)
-    const yAxis = d3.axisLeft(yScale)
-
-    svg.selectAll('.x-axis').remove()
-    svg.append('g')
-      .attr('class', 'x-axis')
-      .attr('transform', `translate(0,${graphSize.height - margin.bottom})`)
-      .call(xAxis)
-      .append('text')
-      .attr('x', graphSize.width / 2)
-      .attr('y', 40)
-      .attr('fill', 'black')
-      .attr('text-anchor', 'middle')
-      .text(xAttribute === 'averagePly' ? "Nombre moyen de coups durant l'ouverture" : 'Nombre moyen de tours')
-
-    svg.selectAll('.y-axis').remove()
-    svg.append('g')
-      .attr('class', 'y-axis')
-      .attr('transform', `translate(${margin.left},0)`)
-      .call(yAxis)
-      .append('text')
-      .attr('transform', 'rotate(-90)')
-      .attr('x', -graphSize.height / 2)
-      .attr('y', -40)
-      .attr('fill', 'black')
-      .attr('text-anchor', 'middle')
-      .text('Pourcentage de victoire des blancs')
-
-    let tooltip = d3.select('#viz5-tooltip')
-    if (tooltip.empty()) {
-      tooltip = d3.select('#viz5')
-        .append('div')
-        .attr('id', 'viz5-tooltip')
-        .style('position', 'absolute')
-        .style('background', 'white')
-        .style('border', '1px solid black')
-        .style('padding', '5px')
-        .style('border-radius', '5px')
-        .style('opacity', 0)
-        .style('pointer-events', 'none')
+    this.options = {
+      ...this.options,
+      pointRadius: 5,
+      highlightedPointRadius: 8,
+      minPointOpacity: 0.6,
+      maxPointOpacity: 0.9,
+      colorSuccessScale: d3.interpolateRgb('#000000', '#ffffff'),
+      ...options
     }
 
-    svg.selectAll('.dot').remove()
-    svg.selectAll('.dot')
-      .data(openingStats)
-      .enter().append('circle')
+    this.xAttribute = 'averagePly'
+  }
+
+  /**
+   * Draw the scatter plot visualization
+   *
+   * @param {Array} data - Chess games dataset
+   */
+  draw (data) {
+    this.initialize()
+    this.updateTitle()
+    const openingStats = preprocess.getOpeningStats(data)
+    if (openingStats.length === 0) {
+      this.showNoDataMessage()
+      return
+    }
+    this.data = openingStats
+    this.drawChart()
+  }
+
+  /**
+   * Draw the scatter plot chart
+   */
+  drawChart () {
+    const { xScale, yScale } = this.createScales()
+    this.drawAxes(xScale, yScale)
+    this.drawPoints(xScale, yScale)
+  }
+
+  /**
+   * Create scales for the scatter plot
+   *
+   * @returns {object} - Scales for the chart
+   */
+  createScales () {
+    const xScale = d3
+      .scaleLinear()
+      .domain([
+        d3.min(this.data, (d) => d[this.xAttribute]) * 0.9,
+        d3.max(this.data, (d) => d[this.xAttribute]) * 1.1
+      ])
+      .range([0, this.graphSize.width])
+
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, 100])
+      .range([this.graphSize.height, 0])
+
+    return { xScale, yScale }
+  }
+
+  /**
+   * Draw axes for the scatter plot
+   *
+   * @param {Function} xScale - X scale
+   * @param {Function} yScale - Y scale
+   */
+  drawAxes (xScale, yScale) {
+    this.xAxis = this.createXAxis(xScale, this.getXAxisLabel())
+    this.createYAxis(yScale, 'Pourcentage de victoire des blancs (%)')
+  }
+
+  /**
+   * Get label for X axis based on current attribute
+   *
+   * @returns {string} - Axis label
+   */
+  getXAxisLabel () {
+    return this.xAttribute === 'averagePly'
+      ? "Nombre moyen de coups durant l'ouverture"
+      : 'Nombre moyen de tours'
+  }
+
+  /**
+   * Draw points on the scatter plot
+   *
+   * @param {Function} xScale - X scale
+   * @param {Function} yScale - Y scale
+   */
+  drawPoints (xScale, yScale) {
+    const countExtent = d3.extent(this.data, (d) => d.total || 0)
+    const sizeScale = d3.scaleLinear().domain(countExtent).range([3, 10])
+
+    const opacityScale = d3
+      .scaleLinear()
+      .domain(countExtent)
+      .range([this.options.minPointOpacity, this.options.maxPointOpacity])
+
+    this.graphGroup
+      .selectAll('.dot')
+      .data(this.data)
+      .enter()
+      .append('circle')
       .attr('class', 'dot')
-      .attr('cx', d => xScale(d[xAttribute]))
-      .attr('cy', d => yScale(d.whiteWinPct))
-      .attr('r', 3)
-      .attr('fill', xAttribute === 'averagePly' ? 'steelblue' : 'green')
-      .attr('opacity', 0.7)
+      .attr('cx', (d) => xScale(d[this.xAttribute]))
+      .attr('cy', (d) => yScale(d.whiteWinPct))
+      .attr('r', (d) => sizeScale(d.total || 0))
+      .attr('fill', (d) => this.options.colorSuccessScale(d.whiteWinPct / 100))
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 0.5)
+      .attr('opacity', (d) => opacityScale(d.total || 0))
+      .style('cursor', 'pointer')
       .on('mouseover', (event, d) => {
-        tooltip.transition().duration(200).style('opacity', 1)
-        tooltip.html(
-          `<strong>${d.name}</strong><br>` +
-          `${xAttribute === 'averagePly' ? 'Nombre moyen de coups' : 'Nombre moyen de tours'}: ${d[xAttribute].toFixed(1)}<br>` +
-          `Victoire Blancs: ${d.whiteWinPct.toFixed(1)}%<br>` +
-          `Victoire Noirs: ${d.blackWinPct.toFixed(1)}%<br>` +
-          `Égalité: ${d.drawPct.toFixed(1)}%`
-        )
-          .style('left', (event.pageX + 10) + 'px')
-          .style('top', (event.pageY - 20) + 'px')
+        d3.select(event.target)
+          .attr('stroke', '#333')
+          .attr('stroke-width', 2)
+          .attr('r', this.options.highlightedPointRadius)
+
+        this.showTooltip(event, this.createTooltipContent(d))
       })
       .on('mousemove', (event) => {
-        tooltip.style('left', (event.pageX + 10) + 'px')
-          .style('top', (event.pageY - 20) + 'px')
+        this.moveTooltip(event)
       })
-      .on('mouseout', () => {
-        tooltip.transition().duration(200).style('opacity', 0)
+      .on('mouseout', (event) => {
+        d3.select(event.target)
+          .attr('stroke', '#fff')
+          .attr('stroke-width', 0.5)
+          .attr('r', (d) => sizeScale(d.total || 0))
+
+        this.hideTooltip()
       })
   }
 
-  updateChart()
+  /**
+   * Create tooltip content for data point
+   *
+   * @param {object} d - Opening stats data point
+   * @returns {string} - HTML content for tooltip
+   */
+  createTooltipContent (d) {
+    return `
+      <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">${
+        d.name
+      }</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Coups durant l'ouverture:</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${d.averagePly.toFixed(
+            1
+          )}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Nombre de tours:</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right;">${d.averageTurns.toFixed(
+            1
+          )}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Victoire Blancs:</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right;">${d.whiteWinPct.toFixed(
+            1
+          )}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee;">Victoire Noirs:</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #eee; text-align: right;">${d.blackWinPct.toFixed(
+            1
+          )}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0;">Égalité:</td>
+          <td style="padding: 4px 0; text-align: right;">${d.drawPct.toFixed(
+            1
+          )}%</td>
+        </tr>
+      </table>
+    `
+  }
 
-  d3.select('#viz5-toggle-x-axis')
-    .on('click', () => {
-      xAttribute = xAttribute === 'averagePly' ? 'averageTurns' : 'averagePly'
-      updateChart()
-      d3.select('#viz5-toggle-x-axis').text(xAttribute === 'averagePly' ? 'Afficher le nombre moyen de tours' : "Afficher le nombre moyen de coups durant l'ouverture")
-      d3.select('#viz5-chart-title')
-        .text(xAttribute === 'averagePly' ? "Taux de performance des ouvertures selon le nombre de coups durant l'ouverture" : 'Taux de performance des ouvertures selon le nombre de tours')
-    })
+  /**
+   * Update the chart title based on current x attribute
+   */
+  updateTitle () {
+    this.setTitle(
+      this.xAttribute === 'averagePly'
+        ? "Taux de performance des ouvertures selon le nombre de coups durant l'ouverture"
+        : 'Taux de performance des ouvertures selon le nombre de tours'
+    )
+  }
+
+  /**
+   * Show message when no data is available
+   */
+  showNoDataMessage () {
+    this.graphGroup
+      .append('text')
+      .attr('class', 'no-data-message')
+      .attr('x', this.graphSize.width / 2)
+      .attr('y', this.graphSize.height / 2)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '16px')
+      .style('fill', '#666')
+      .text('Aucune donnée disponible pour les filtres sélectionnés')
+  }
+}
+
+/**
+ * Create and draw the scatter plot visualization
+ *
+ * @param {Array} data - Chess games dataset
+ * @param {object} svgSize - Size of the SVG
+ * @param {object} margin - Margins around the graph
+ * @param {object} graphSize - Size of the graph
+ */
+export function drawViz (data, svgSize, margin, graphSize) {
+  const plyViz = new ScatterPlotVisualization('viz5-ply', {
+    width: svgSize.width,
+    height: svgSize.height,
+    margin
+  })
+  plyViz.xAttribute = 'averagePly'
+  plyViz.draw(data)
+
+  const turnsViz = new ScatterPlotVisualization('viz5-turns', {
+    width: svgSize.width,
+    height: svgSize.height,
+    margin
+  })
+  turnsViz.xAttribute = 'averageTurns'
+  turnsViz.draw(data)
 }

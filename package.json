@@ -1,14 +1,16 @@
 {
-  "name": "tp4",
+  "name": "projet",
   "version": "1.0.2",
-  "description": "TP pour le cours INF8808.",
-  "main": "src/index.js",
+  "description": "Projet de session INF8808.",
+  "main": "index.js",
   "scripts": {
-    "build": "parcel build ./src/index.html",
-    "start": "parcel ./src/index.html --log-level=2 --port=8080",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "parcel build ./index.html",
+    "start": "parcel ./index.html --log-level=2 --port=8080",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
-  "author": "Olivia Gélinas",
+  "author": "Équipe 4 & 43",
   "license": "UNLICENSED",
   "dependencies": {
     "d3": "^7.6.1",
