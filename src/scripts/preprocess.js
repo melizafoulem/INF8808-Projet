@@ -283,40 +283,43 @@ export function getTimeControlOptions (data) {
 }
 
 // De plus, modifions la fonction getOpeningUsageByElo pour utiliser cette estimation
-/**
- * @param data
- * @param filterType
- * @param timeControl
- * @param colorFilter
- * @param sortBy
- */
-export function getOpeningUsageByElo (data, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
-  const filteredData = []
-  const openingCounts = {}
+export function getOpeningUsageByElo(data, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
+    const filteredData = [];
+    const openingCounts = {};
 
-  for (const d of data) {
-    const ratedValue = typeof d.rated === 'string'
-      ? d.rated.toLowerCase() === 'true'
-      : !!d.rated
-
-    const ratedType = ratedValue ? 'rated' : 'casual'
-    const effectiveTimeControl = d.time_control || d.estimated_time_control
-    const opening = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '')
-
-    if ((filterType !== null && ratedType !== filterType) ||
-          (timeControl !== null && effectiveTimeControl !== timeControl)) {
-      continue
+    for (const d of data) {
+      const ratedValue = typeof d.rated === 'string'
+        ? d.rated.toLowerCase() === 'true'
+        : !!d.rated;
+  
+      const ratedType = ratedValue ? 'rated' : 'casual';
+      const effectiveTimeControl = d.time_control || d.estimated_time_control;
+      const opening = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
+      
+      let skipEntry = false;
+      
+      // Vérification du filtre rated/casual
+      if (filterType !== null) {
+        if (filterType === 'rated' && !ratedValue) skipEntry = true;
+        if (filterType === 'casual' && ratedValue) skipEntry = true;
+      }
+      
+      // Vérification du filtre de contrôle de temps
+      if (!skipEntry && timeControl !== null && effectiveTimeControl !== timeControl) {
+        skipEntry = true;
+      }
+      
+      if (skipEntry) continue;
+  
+      filteredData.push({
+        ...d,
+        ratedType,
+        effectiveTimeControl,
+        cleanedOpening: opening,
+      });
+  
+      openingCounts[opening] = (openingCounts[opening] || 0) + 1;
     }
-
-    filteredData.push({
-      ...d,
-      ratedType,
-      effectiveTimeControl,
-      cleanedOpening: opening
-    })
-
-    openingCounts[opening] = (openingCounts[opening] || 0) + 1
-  }
 
   if (filteredData.length === 0) {
     return { data: [], openings: [], eloRanges: [] }
@@ -401,15 +404,13 @@ export function getOpeningUsageByElo (data, filterType = null, timeControl = nul
     data: heatmapData,
     openings: topOpenings,
     eloRanges: eloRanges
-  }
+  };
 }
+  
 
-/**
- * @param data
- */
-export function getEloRange (data) {
-  const elos = data.flatMap(d => [d.white_rating, d.black_rating])
-  const minElo = Math.floor(Math.min(...elos) / 100) * 100
-  const maxElo = Math.ceil(Math.max(...elos) / 100) * 100
-  return { min: minElo, max: maxElo }
+export function getEloRange(data) {
+  const elos = data.flatMap(d => [d.white_rating, d.black_rating]);
+  const minElo = Math.floor(Math.min(...elos) / 100) * 100;
+  const maxElo = Math.ceil(Math.max(...elos) / 100) * 100;
+  return { min: minElo, max: maxElo };
 }
