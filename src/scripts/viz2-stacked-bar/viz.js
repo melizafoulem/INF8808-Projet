@@ -59,13 +59,11 @@ export class StackedBarVisualization extends VisualizationBase {
     if (this.chartType === "wins") {
       processedData = preprocess
         .getTopNOpeningsWinners(data, this.options.numOpenings)
-        // .sort((a, b) => b.whiteWinPct - a.whiteWinPct)
         .slice(0, this.options.numOpenings);
       title = "Répartition des victoires par ouverture";
     } else {
       processedData = preprocess
         .getTopNOpeningsWithResults(data, this.options.numOpenings)
-        // .sort((a, b) => b.matePct - a.matePct)
         .slice(0, this.options.numOpenings);
       title = "Répartition des états de la victoire";
     }
@@ -351,7 +349,6 @@ export class StackedBarVisualization extends VisualizationBase {
       return;
     }
     this.graphGroup.selectAll("*").remove();
-
     this.graphGroup
       .append("text")
       .attr("class", "no-data-message")
@@ -362,17 +359,6 @@ export class StackedBarVisualization extends VisualizationBase {
       .style("font-size", "16px")
       .style("fill", "#666")
       .text(message);
-  }
-
-  /**
-   * Update the visualization with new data
-   *
-   * @param {Array} data - Chess games dataset
-   */
-  update(data) {
-    // Clear and redraw
-    this.clear();
-    this.draw(data);
   }
 }
 
@@ -395,8 +381,6 @@ export function drawViz(data, svgSize, margin, graphSize) {
       )
     ),
   };
-
-  console.log("extendedSvgSize", extendedSvgSize);
 
   const winsViz = new StackedBarVisualization(
     "viz2-wins",

@@ -14,7 +14,6 @@ export class CirclePackingVisualization {
     this.svgId = svgId;
     this.svg = d3.select(`#${svgId}`);
 
-    // Set default options
     this.options = {
       width: 1000,
       height: 800,
@@ -50,7 +49,6 @@ export class CirclePackingVisualization {
       return;
     }
 
-    // Split into separate families
     const openingFamilies = Object.entries(topOpenings).map(
       ([name, details]) => {
         const children = Object.entries(details.variations).map(
@@ -78,6 +76,9 @@ export class CirclePackingVisualization {
     this.renderAllFamilies();
   }
 
+  /**
+   * Render all opening families in a grid layout
+   */
   renderAllFamilies() {
     const container = d3.select(`#${this.svgId}`);
     container.selectAll("*").remove();
@@ -100,6 +101,13 @@ export class CirclePackingVisualization {
     });
   }
 
+  /**
+   * Draw the circle packing for a single opening family
+   *
+   * @param {object} familyData - Family data object with variants
+   * @param {object} svg - D3 selection of the SVG element
+   * @param {string} color - Color for the primary circles
+   */
   drawCirclePack(familyData, svg, color) {
     const root = d3
       .hierarchy(familyData)
@@ -128,7 +136,6 @@ export class CirclePackingVisualization {
       .attr("stroke", (d) => (d.depth === 1 ? "#fff" : "none"))
       .attr("stroke-width", 1.5);
 
-    // Add visible labels if the radius is big enough
     node
       .filter((d) => d.r > 12)
       .append("text")
@@ -154,111 +161,6 @@ export class CirclePackingVisualization {
         }
       });
 
-    // Keep the title tooltip for hover
-    this.addCircleInteractions(node);
-  }
-
-  /**
-   * Create hierarchical data structure for circle packing
-   *
-   * @param {object} topOpenings - Top opening data
-   * @returns {object} - Hierarchical data for circle packing
-   */
-  createHierarchyData(topOpenings) {
-    return {
-      name: "openings",
-      children: Object.entries(topOpenings).map(([openingName, details]) => {
-        const children = Object.entries(details.variations).map(
-          ([varName, varCount]) => ({
-            name: varName || "Principal",
-            count: varCount * this.options.variationInflationFactor,
-          })
-        );
-
-        // Add a node for the main line if there are no explicit variations
-        if (children.length === 0) {
-          children.push({
-            name: "Principal",
-            count: details.count * 0.8, // Use 80% of total count for the main line
-          });
-        }
-
-        // Calculate total size for parent node
-        const sumOfInflatedChildren = children.reduce(
-          (acc, c) => acc + c.count,
-          0
-        );
-
-        return {
-          name: openingName,
-          count: details.count + sumOfInflatedChildren,
-          children,
-        };
-      }),
-    };
-  }
-
-  /**
-   * Draw circles for nodes
-   *
-   * @param {Selection} g - Group element
-   * @param {Array} nodes - Hierarchical nodes
-   * @param {Function} colorScale - Color scale
-   */
-  drawCircles(g, nodes, colorScale) {
-    const node = g
-      .selectAll("g")
-      .data(nodes)
-      .enter()
-      .append("g")
-      .attr("transform", (d) => `translate(${d.x},${d.y})`);
-
-    // Draw circles
-    node
-      .append("circle")
-      .attr("r", (d) => d.r)
-      .attr("fill", (d) => {
-        if (d.depth === 1) {
-          return colorScale(d.data.name);
-        }
-        // For variants, use a lighter shade of parent color
-        const parentColor = colorScale(d.parent.data.name);
-        return d3.color(parentColor).brighter(1.5);
-      })
-      .attr("stroke", (d) => (d.depth === 1 ? "#fff" : "none"))
-      .attr("stroke-width", 1.5)
-      .attr("class", (d) => `circle-${d.depth}`);
-
-    // Add text labels
-    node
-      .filter((d) => d.depth === 1 || (d.depth === 2 && d.r > 12))
-      .append("text")
-      .attr("dy", (d) => (d.depth === 1 ? 0 : "0.3em"))
-      .attr("text-anchor", "middle")
-      .attr("font-size", (d) => Math.min(2 * d.r, d.depth === 1 ? 18 : 12))
-      .attr("fill", (d) => (d.depth === 1 ? "#fff" : "#000"))
-      .text((d) => d.data.name)
-      .each(function (d) {
-        // Truncate text that's too wide
-        const textElement = d3.select(this);
-        let text = textElement.text();
-        let textLength = this.getComputedTextLength();
-
-        // Try to fit text within circle
-        const maxWidth = 2 * d.r * 0.8; // 80% of diameter
-        while (textLength > maxWidth && text.length > 3) {
-          text = text.slice(0, text.length - 4) + "...";
-          textElement.text(text);
-          textLength = this.getComputedTextLength();
-        }
-
-        // Hide text completely if still too large
-        if (textLength > maxWidth) {
-          textElement.text("");
-        }
-      });
-
-    // Add interactive behaviors
     this.addCircleInteractions(node);
   }
 
@@ -293,7 +195,7 @@ export class CirclePackingVisualization {
     let tooltipVisibleFor = null;
 
     icon.on("click", (event) => {
-      event.stopPropagation(); // Prevent immediate close
+      event.stopPropagation();
 
       const tooltip = d3.select(".tooltip");
       const currentFamily = family.name;
@@ -334,7 +236,6 @@ export class CirclePackingVisualization {
 
       tooltipVisibleFor = currentFamily;
 
-      // Close tooltip on outside click
       d3.select("body").on("click.tooltip", function (e) {
         if (!e.target.closest(".info-icon")) {
           tooltip.transition().duration(200).style("opacity", 0);
@@ -415,7 +316,6 @@ export class CirclePackingVisualization {
       .attr("class", "legend")
       .attr("transform", `translate(${this.options.width - 230}, 50)`);
 
-    // Add title
     legendGroup
       .append("text")
       .attr("x", 0)
@@ -424,7 +324,6 @@ export class CirclePackingVisualization {
       .attr("font-weight", "bold")
       .text("Familles d'ouvertures");
 
-    // Create legend items
     const legendItems = legendGroup
       .selectAll(".legend-item")
       .data(topLevelNodes)
@@ -434,27 +333,22 @@ export class CirclePackingVisualization {
       .attr("transform", (d, i) => `translate(0, ${i * 25})`)
       .style("cursor", "pointer")
       .on("mouseover", (event, d) => {
-        // Highlight corresponding circle
         this.svg
           .selectAll(".circle-1")
           .attr("opacity", (node) =>
             node.data.name === d.data.name ? 1 : 0.3
           );
 
-        // Highlight legend item
         d3.select(event.currentTarget)
           .select("text")
           .attr("font-weight", "bold");
       })
       .on("mouseout", () => {
-        // Restore all circles
         this.svg.selectAll(".circle-1").attr("opacity", 1);
 
-        // Restore legend items
         legendGroup.selectAll("text").attr("font-weight", "normal");
       });
 
-    // Add colored circles
     legendItems
       .append("circle")
       .attr("r", 7)
@@ -462,13 +356,11 @@ export class CirclePackingVisualization {
       .attr("cy", 10)
       .attr("fill", (d) => colorScale(d.data.name));
 
-    // Add opening names
     legendItems
       .append("text")
       .attr("x", 25)
       .attr("y", 15)
       .text((d) => {
-        // Truncate long names
         if (d.data.name.length > 20) {
           return d.data.name.substring(0, 18) + "...";
         }
@@ -481,10 +373,8 @@ export class CirclePackingVisualization {
    * Create tooltip
    */
   createTooltip() {
-    // Remove any existing tooltip
     d3.select("body").select("#viz4-tooltip").remove();
 
-    // Create new tooltip
     d3.select("body")
       .append("div")
       .attr("id", "viz4-tooltip")
