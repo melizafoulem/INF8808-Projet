@@ -468,3 +468,31 @@
     line-height: 1;
   }
   
+  /* Additional styles for heatmap visualization */
+  .viz-search-container {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .viz-search-input {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 300px;
+  }
+
+  #viz3-container .graph {
+    overflow: visible;
+  }
+
+  .heatmap-cell {
+    margin-bottom: 20px;
+  }
+
+  .heatmap-title {
+    text-align: center;
+    margin: 5px 0;
+    font-size: 14px;
+  }
+  

@@ -260,7 +260,7 @@ export function getTimeControlOptions(data) {
 export function getOpeningUsageByElo(data, filterType = null, timeControl = null, colorFilter = 'both', sortBy = 'popularity') {
     const filteredData = [];
     const openingCounts = {};
-    
+
     for (const d of data) {
       const ratedValue = typeof d.rated === 'string'
         ? d.rated.toLowerCase() === 'true'
@@ -269,11 +269,21 @@ export function getOpeningUsageByElo(data, filterType = null, timeControl = null
       const ratedType = ratedValue ? 'rated' : 'casual';
       const effectiveTimeControl = d.time_control || d.estimated_time_control;
       const opening = d.opening_name.split(/[:|]/)[0].trim().replace(/#\d+$/, '');
-  
-      if ((filterType !== null && ratedType !== filterType) ||
-          (timeControl !== null && effectiveTimeControl !== timeControl)) {
-        continue;
+      
+      let skipEntry = false;
+      
+      // Vérification du filtre rated/casual
+      if (filterType !== null) {
+        if (filterType === 'rated' && !ratedValue) skipEntry = true;
+        if (filterType === 'casual' && ratedValue) skipEntry = true;
       }
+      
+      // Vérification du filtre de contrôle de temps
+      if (!skipEntry && timeControl !== null && effectiveTimeControl !== timeControl) {
+        skipEntry = true;
+      }
+      
+      if (skipEntry) continue;
   
       filteredData.push({
         ...d,
@@ -363,7 +373,7 @@ export function getOpeningUsageByElo(data, filterType = null, timeControl = null
         });
       }
     }
-  
+
     return {
       data: heatmapData,
       openings: topOpenings,
