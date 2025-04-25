@@ -1,4 +1,4 @@
-import * as preprocess from "../preprocess.js";
+import * as preprocess from '../preprocess.js'
 
 /**
  * Circle Packing visualization for chess opening variants
@@ -10,9 +10,9 @@ export class CirclePackingVisualization {
    * @param {string} svgId - ID of the SVG element
    * @param {object} options - Visualization options
    */
-  constructor(svgId, options = {}) {
-    this.svgId = svgId;
-    this.svg = d3.select(`#${svgId}`);
+  constructor (svgId, options = {}) {
+    this.svgId = svgId
+    this.svg = d3.select(`#${svgId}`)
 
     this.options = {
       width: 1000,
@@ -21,14 +21,14 @@ export class CirclePackingVisualization {
       numOpenings: 10,
       colorScheme: d3.schemeTableau10,
       variationInflationFactor: 2.0,
-      ...options,
-    };
+      ...options
+    }
 
-    this.currentPage = 0;
-    this.itemsPerPage = this.options.numOpenings;
-    this.fullOpeningFamilies = [];
+    this.currentPage = 0
+    this.itemsPerPage = this.options.numOpenings
+    this.fullOpeningFamilies = []
 
-    this.createTooltip();
+    this.createTooltip()
   }
 
   /**
@@ -36,69 +36,69 @@ export class CirclePackingVisualization {
    *
    * @param {Array} data - Chess games dataset
    */
-  draw(data) {
-    const container = d3.select(`#${this.svgId}`);
-    container.selectAll("*").remove(); // Clear previous content
+  draw (data) {
+    const container = d3.select(`#${this.svgId}`)
+    container.selectAll('*').remove() // Clear previous content
 
     const topOpenings = preprocess.getNOpeningVariations(
       data,
       this.options.numOpenings
-    );
+    )
     if (!topOpenings || Object.keys(topOpenings).length === 0) {
-      this.showNoDataMessage();
-      return;
+      this.showNoDataMessage()
+      return
     }
 
     const openingFamilies = Object.entries(topOpenings).map(
       ([name, details]) => {
         const children = Object.entries(details.variations).map(
           ([varName, varCount]) => ({
-            name: varName || "Principal",
-            count: varCount * this.options.variationInflationFactor,
+            name: varName || 'Principal',
+            count: varCount * this.options.variationInflationFactor
           })
-        );
+        )
 
         if (children.length === 0) {
           children.push({
-            name: "Principal",
-            count: details.count * 0.8,
-          });
+            name: 'Principal',
+            count: details.count * 0.8
+          })
         }
 
-        return { name, children };
+        return { name, children }
       }
-    );
+    )
 
     this.fullOpeningFamilies = openingFamilies.slice(
       0,
       this.options.numOpenings
-    );
-    this.renderAllFamilies();
+    )
+    this.renderAllFamilies()
   }
 
   /**
    * Render all opening families in a grid layout
    */
-  renderAllFamilies() {
-    const container = d3.select(`#${this.svgId}`);
-    container.selectAll("*").remove();
+  renderAllFamilies () {
+    const container = d3.select(`#${this.svgId}`)
+    container.selectAll('*').remove()
 
-    const grid = container.append("div").attr("class", "circle-multiple-grid");
+    const grid = container.append('div').attr('class', 'circle-multiple-grid')
 
     const colorScale = d3
       .scaleOrdinal()
       .domain(this.fullOpeningFamilies.map((d) => d.name))
-      .range(this.options.colorScheme);
+      .range(this.options.colorScheme)
 
     this.fullOpeningFamilies.forEach((family) => {
-      const chart = grid.append("div").attr("class", "circle-multiple-chart");
+      const chart = grid.append('div').attr('class', 'circle-multiple-chart')
 
-      this.appendTitleWithTooltip(chart, family);
+      this.appendTitleWithTooltip(chart, family)
 
-      const svg = chart.append("svg").attr("width", 280).attr("height", 280);
+      const svg = chart.append('svg').attr('width', 280).attr('height', 280)
 
-      this.drawCirclePack(family, svg, colorScale(family.name));
-    });
+      this.drawCirclePack(family, svg, colorScale(family.name))
+    })
   }
 
   /**
@@ -108,60 +108,60 @@ export class CirclePackingVisualization {
    * @param {object} svg - D3 selection of the SVG element
    * @param {string} color - Color for the primary circles
    */
-  drawCirclePack(familyData, svg, color) {
+  drawCirclePack (familyData, svg, color) {
     const root = d3
       .hierarchy(familyData)
       .sum((d) => d.count)
-      .sort((a, b) => b.value - a.value);
+      .sort((a, b) => b.value - a.value)
 
-    const pack = d3.pack().size([280, 280]).padding(this.options.padding);
+    const pack = d3.pack().size([280, 280]).padding(this.options.padding)
 
-    const nodes = pack(root).descendants().slice(1); // exclude root
+    const nodes = pack(root).descendants().slice(1) // exclude root
 
-    const g = svg.append("g").attr("transform", "translate(0,0)");
+    const g = svg.append('g').attr('transform', 'translate(0,0)')
 
     const node = g
-      .selectAll("g")
+      .selectAll('g')
       .data(nodes)
       .enter()
-      .append("g")
-      .attr("transform", (d) => `translate(${d.x},${d.y})`);
+      .append('g')
+      .attr('transform', (d) => `translate(${d.x},${d.y})`)
 
     node
-      .append("circle")
-      .attr("r", (d) => d.r)
-      .attr("fill", (d) =>
+      .append('circle')
+      .attr('r', (d) => d.r)
+      .attr('fill', (d) =>
         d.depth === 1 ? color : d3.color(color).brighter(1.5)
       )
-      .attr("stroke", (d) => (d.depth === 1 ? "#fff" : "none"))
-      .attr("stroke-width", 1.5);
+      .attr('stroke', (d) => (d.depth === 1 ? '#fff' : 'none'))
+      .attr('stroke-width', 1.5)
 
     node
       .filter((d) => d.r > 12)
-      .append("text")
-      .attr("dy", "0.3em")
-      .attr("text-anchor", "middle")
-      .attr("font-size", (d) => Math.min(2 * d.r, 12))
-      .attr("fill", "#000")
+      .append('text')
+      .attr('dy', '0.3em')
+      .attr('text-anchor', 'middle')
+      .attr('font-size', (d) => Math.min(2 * d.r, 12))
+      .attr('fill', '#000')
       .text((d) => d.data.name)
       .each(function (d) {
-        const textElement = d3.select(this);
-        let text = textElement.text();
-        let textLength = this.getComputedTextLength();
-        const maxWidth = 2 * d.r * 0.8;
+        const textElement = d3.select(this)
+        let text = textElement.text()
+        let textLength = this.getComputedTextLength()
+        const maxWidth = 2 * d.r * 0.8
 
         while (textLength > maxWidth && text.length > 3) {
-          text = text.slice(0, text.length - 4) + "...";
-          textElement.text(text);
-          textLength = this.getComputedTextLength();
+          text = text.slice(0, text.length - 4) + '...'
+          textElement.text(text)
+          textLength = this.getComputedTextLength()
         }
 
         if (textLength > maxWidth) {
-          textElement.text("");
+          textElement.text('')
         }
-      });
+      })
 
-    this.addCircleInteractions(node);
+    this.addCircleInteractions(node)
   }
 
   /**
@@ -170,51 +170,51 @@ export class CirclePackingVisualization {
    * @param {Selection} parent - The parent D3 selection to append the title to
    * @param {object} family - The family data object
    */
-  appendTitleWithTooltip(parent, family) {
+  appendTitleWithTooltip (parent, family) {
     const titleContainer = parent
-      .append("div")
-      .attr("class", "chart-title-container")
-      .style("display", "flex")
-      .style("align-items", "center")
-      .style("gap", "6px");
+      .append('div')
+      .attr('class', 'chart-title-container')
+      .style('display', 'flex')
+      .style('align-items', 'center')
+      .style('gap', '6px')
 
     titleContainer
-      .append("h4")
-      .attr("class", "chart-title")
+      .append('h4')
+      .attr('class', 'chart-title')
       .text(family.name)
-      .style("margin", "0");
+      .style('margin', '0')
 
     const icon = titleContainer
-      .append("span")
-      .attr("class", "info-icon")
-      .html("&#9432;") // ℹ️ icon
-      .style("cursor", "pointer")
-      .style("font-size", "16px")
-      .style("color", "#666");
+      .append('span')
+      .attr('class', 'info-icon')
+      .html('&#9432;') // ℹ️ icon
+      .style('cursor', 'pointer')
+      .style('font-size', '16px')
+      .style('color', '#666')
 
-    let tooltipVisibleFor = null;
+    let tooltipVisibleFor = null
 
-    icon.on("click", (event) => {
-      event.stopPropagation();
+    icon.on('click', (event) => {
+      event.stopPropagation()
 
-      const tooltip = d3.select(".tooltip");
-      const currentFamily = family.name;
+      const tooltip = d3.select('.tooltip')
+      const currentFamily = family.name
 
       if (
-        tooltip.style("opacity") === "1" &&
+        tooltip.style('opacity') === '1' &&
         tooltipVisibleFor === currentFamily
       ) {
-        tooltip.transition().duration(200).style("opacity", 0);
-        tooltipVisibleFor = null;
-        return;
+        tooltip.transition().duration(200).style('opacity', 0)
+        tooltipVisibleFor = null
+        return
       }
 
       const totalGames = Math.round(
         family.children.reduce((sum, v) => sum + v.count, 0) /
           this.options.variationInflationFactor
-      );
+      )
 
-      tooltip.transition().duration(200).style("opacity", 1);
+      tooltip.transition().duration(200).style('opacity', 1)
       tooltip
         .html(
           `
@@ -226,24 +226,24 @@ export class CirclePackingVisualization {
       </div>
       <div style="font-size: 12px; color: #666;">
         ${family.children.length} variante${
-            family.children.length > 1 ? "s" : ""
+            family.children.length > 1 ? 's' : ''
           }
       </div>
     `
         )
-        .style("left", event.pageX + 10 + "px")
-        .style("top", event.pageY - 10 + "px");
+        .style('left', event.pageX + 10 + 'px')
+        .style('top', event.pageY - 10 + 'px')
 
-      tooltipVisibleFor = currentFamily;
+      tooltipVisibleFor = currentFamily
 
-      d3.select("body").on("click.tooltip", function (e) {
-        if (!e.target.closest(".info-icon")) {
-          tooltip.transition().duration(200).style("opacity", 0);
-          tooltipVisibleFor = null;
-          d3.select("body").on("click.tooltip", null);
+      d3.select('body').on('click.tooltip', function (e) {
+        if (!e.target.closest('.info-icon')) {
+          tooltip.transition().duration(200).style('opacity', 0)
+          tooltipVisibleFor = null
+          d3.select('body').on('click.tooltip', null)
         }
-      });
-    });
+      })
+    })
   }
 
   /**
@@ -251,21 +251,21 @@ export class CirclePackingVisualization {
    *
    * @param {Selection} node - Node elements
    */
-  addCircleInteractions(node) {
-    const tooltip = d3.select("body").select(".tooltip");
+  addCircleInteractions (node) {
+    const tooltip = d3.select('body').select('.tooltip')
     node
       .filter((d) => d.depth === 1)
-      .style("cursor", "pointer")
-      .on("mouseover", (event, d) => {
+      .style('cursor', 'pointer')
+      .on('mouseover', (event, d) => {
         d3.select(event.currentTarget)
-          .select("circle")
-          .attr("stroke", "#333")
-          .attr("stroke-width", 2);
+          .select('circle')
+          .attr('stroke', '#333')
+          .attr('stroke-width', 2)
 
-        const parentTotal = d.parent.value;
-        const percentage = (d.value / parentTotal) * 100;
+        const parentTotal = d.parent.value
+        const percentage = (d.value / parentTotal) * 100
 
-        tooltip.transition().duration(200).style("opacity", 1);
+        tooltip.transition().duration(200).style('opacity', 1)
         tooltip
           .html(
             `
@@ -273,7 +273,7 @@ export class CirclePackingVisualization {
             d.parent.data.name
           }</div>
           <div style="margin-bottom: 8px; font-size: 11px; color: #777;">Variante: ${
-            d.data.name || "Principal"
+            d.data.name || 'Principal'
           }</div>
           <div style="font-size: 14px; margin-bottom: 5px;">
             <span style="font-weight: bold;">${percentage.toFixed(
@@ -289,19 +289,19 @@ export class CirclePackingVisualization {
           </div>
         `
           )
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY - 10 + "px");
+          .style('left', event.pageX + 10 + 'px')
+          .style('top', event.pageY - 10 + 'px')
       })
-      .on("mousemove", (event) => {
+      .on('mousemove', (event) => {
         tooltip
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY - 10 + "px");
+          .style('left', event.pageX + 10 + 'px')
+          .style('top', event.pageY - 10 + 'px')
       })
-      .on("mouseout", (event) => {
-        d3.select(event.currentTarget).select("circle").attr("stroke", "none");
+      .on('mouseout', (event) => {
+        d3.select(event.currentTarget).select('circle').attr('stroke', 'none')
 
-        tooltip.transition().duration(500).style("opacity", 0);
-      });
+        tooltip.transition().duration(500).style('opacity', 0)
+      })
   }
 
   /**
@@ -310,100 +310,100 @@ export class CirclePackingVisualization {
    * @param {Array} topLevelNodes - Top level nodes
    * @param {Function} colorScale - Color scale
    */
-  createLegend(topLevelNodes, colorScale) {
+  createLegend (topLevelNodes, colorScale) {
     const legendGroup = this.svg
-      .append("g")
-      .attr("class", "legend")
-      .attr("transform", `translate(${this.options.width - 230}, 50)`);
+      .append('g')
+      .attr('class', 'legend')
+      .attr('transform', `translate(${this.options.width - 230}, 50)`)
 
     legendGroup
-      .append("text")
-      .attr("x", 0)
-      .attr("y", -20)
-      .attr("font-size", 14)
-      .attr("font-weight", "bold")
-      .text("Familles d'ouvertures");
+      .append('text')
+      .attr('x', 0)
+      .attr('y', -20)
+      .attr('font-size', 14)
+      .attr('font-weight', 'bold')
+      .text("Familles d'ouvertures")
 
     const legendItems = legendGroup
-      .selectAll(".legend-item")
+      .selectAll('.legend-item')
       .data(topLevelNodes)
       .enter()
-      .append("g")
-      .attr("class", "legend-item")
-      .attr("transform", (d, i) => `translate(0, ${i * 25})`)
-      .style("cursor", "pointer")
-      .on("mouseover", (event, d) => {
+      .append('g')
+      .attr('class', 'legend-item')
+      .attr('transform', (d, i) => `translate(0, ${i * 25})`)
+      .style('cursor', 'pointer')
+      .on('mouseover', (event, d) => {
         this.svg
-          .selectAll(".circle-1")
-          .attr("opacity", (node) =>
+          .selectAll('.circle-1')
+          .attr('opacity', (node) =>
             node.data.name === d.data.name ? 1 : 0.3
-          );
+          )
 
         d3.select(event.currentTarget)
-          .select("text")
-          .attr("font-weight", "bold");
+          .select('text')
+          .attr('font-weight', 'bold')
       })
-      .on("mouseout", () => {
-        this.svg.selectAll(".circle-1").attr("opacity", 1);
+      .on('mouseout', () => {
+        this.svg.selectAll('.circle-1').attr('opacity', 1)
 
-        legendGroup.selectAll("text").attr("font-weight", "normal");
-      });
-
-    legendItems
-      .append("circle")
-      .attr("r", 7)
-      .attr("cx", 10)
-      .attr("cy", 10)
-      .attr("fill", (d) => colorScale(d.data.name));
+        legendGroup.selectAll('text').attr('font-weight', 'normal')
+      })
 
     legendItems
-      .append("text")
-      .attr("x", 25)
-      .attr("y", 15)
+      .append('circle')
+      .attr('r', 7)
+      .attr('cx', 10)
+      .attr('cy', 10)
+      .attr('fill', (d) => colorScale(d.data.name))
+
+    legendItems
+      .append('text')
+      .attr('x', 25)
+      .attr('y', 15)
       .text((d) => {
         if (d.data.name.length > 20) {
-          return d.data.name.substring(0, 18) + "...";
+          return d.data.name.substring(0, 18) + '...'
         }
-        return d.data.name;
+        return d.data.name
       })
-      .style("font-size", "14px");
+      .style('font-size', '14px')
   }
 
   /**
    * Create tooltip
    */
-  createTooltip() {
-    d3.select("body").select("#viz4-tooltip").remove();
+  createTooltip () {
+    d3.select('body').select('#viz4-tooltip').remove()
 
-    d3.select("body")
-      .append("div")
-      .attr("id", "viz4-tooltip")
-      .attr("class", "tooltip")
-      .style("position", "absolute")
-      .style("padding", "10px")
-      .style("background", "rgba(255, 255, 255, 0.95)")
-      .style("border", "1px solid #ddd")
-      .style("border-radius", "4px")
-      .style("pointer-events", "none")
-      .style("font-family", "'Roboto', sans-serif")
-      .style("font-size", "12px")
-      .style("box-shadow", "0 4px 8px rgba(0,0,0,0.1)")
-      .style("opacity", 0)
-      .style("z-index", 1000);
+    d3.select('body')
+      .append('div')
+      .attr('id', 'viz4-tooltip')
+      .attr('class', 'tooltip')
+      .style('position', 'absolute')
+      .style('padding', '10px')
+      .style('background', 'rgba(255, 255, 255, 0.95)')
+      .style('border', '1px solid #ddd')
+      .style('border-radius', '4px')
+      .style('pointer-events', 'none')
+      .style('font-family', "'Roboto', sans-serif")
+      .style('font-size', '12px')
+      .style('box-shadow', '0 4px 8px rgba(0,0,0,0.1)')
+      .style('opacity', 0)
+      .style('z-index', 1000)
   }
 
   /**
    * Show message when no data is available
    */
-  showNoDataMessage() {
+  showNoDataMessage () {
     this.svg
-      .append("text")
-      .attr("x", this.options.width / 2)
-      .attr("y", this.options.height / 2)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "16px")
-      .attr("fill", "#666")
-      .text("Aucune donnée disponible pour les filtres sélectionnés");
+      .append('text')
+      .attr('x', this.options.width / 2)
+      .attr('y', this.options.height / 2)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '16px')
+      .attr('fill', '#666')
+      .text('Aucune donnée disponible pour les filtres sélectionnés')
   }
 }
 
@@ -415,13 +415,13 @@ export class CirclePackingVisualization {
  * @param {object} margin - Margins around the graph
  * @param {object} graphSize - Size of the graph
  */
-export function drawViz(data, svgSize, margin, graphSize) {
-  const circlePacking = new CirclePackingVisualization("viz4", {
+export function drawViz (data, svgSize, margin, graphSize) {
+  const circlePacking = new CirclePackingVisualization('viz4', {
     width: svgSize.width,
     height: svgSize.height,
     padding: 3,
-    topOpenings: 10,
-  });
+    topOpenings: 10
+  })
 
-  circlePacking.draw(data);
+  circlePacking.draw(data)
 }

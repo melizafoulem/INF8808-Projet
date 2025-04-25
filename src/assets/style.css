@@ -1,4 +1,3 @@
-/* Base styles */
 :root {
   --primary-color: #1f77b4;
   --secondary-color: #2e2e2e;
@@ -25,7 +24,6 @@ body {
   flex-direction: column;
 }
 
-/* Typography */
 h1,
 h2,
 h3,
@@ -64,7 +62,6 @@ p {
   font-style: italic;
 }
 
-/* Layout */
 header {
   background-color: var(--background-color);
   padding: 40px 60px 30px;
@@ -84,7 +81,6 @@ footer {
   font-size: 14px;
 }
 
-/* Intro Panel */
 .intro-panel {
   margin-bottom: 30px;
   padding: 15px 0;
@@ -96,14 +92,13 @@ footer {
   text-align: center;
 }
 
-/* Filters Panel */
 .filters-panel {
   background-color: #f9f9f9;
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 30px;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
   flex-wrap: wrap;
   box-shadow: 0 2px 5px var(--shadow-color);
@@ -153,10 +148,17 @@ footer {
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   cursor: pointer;
   padding: 0 15px;
+}
+
+.search-container input,
+.search-container button {
+  height: 40px;
+  line-height: 40px;
+  box-sizing: border-box;
 }
 
 .search-icon {
@@ -166,7 +168,6 @@ footer {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
 }
 
-/* Buttons */
 button {
   padding: 8px 16px;
   border-radius: 4px;
@@ -196,7 +197,6 @@ button {
   background-color: var(--hover-color);
 }
 
-/* Visualization Grid */
 .viz-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr));
@@ -231,7 +231,6 @@ button {
   justify-content: flex-start;
 }
 
-/* Chart Components */
 .chart-title {
   text-align: center;
   font-size: 18px;
@@ -267,7 +266,6 @@ svg.visualization {
   width: 100%;
 }
 
-/* Tooltip */
 .tooltip {
   position: absolute;
   background-color: rgba(255, 255, 255, 0.95);
@@ -282,7 +280,6 @@ svg.visualization {
   z-index: 100;
 }
 
-/* Legend */
 .legend-container {
   margin-top: 15px;
 }
@@ -300,12 +297,10 @@ svg.visualization {
   border-radius: 2px;
 }
 
-/* Transitions */
 .viz2-container {
   transition: opacity 0.5s ease-in-out;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   header {
     padding: 25px 20px 20px;
@@ -359,7 +354,6 @@ svg.visualization {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin-top: 8px;
 }
 
 select {
@@ -508,23 +502,23 @@ button.disabled {
 }
 
 header {
-  padding: 60px 80px 40px; /* match Figma spacing */
+  padding: 60px 80px 40px;
   border-bottom: 1px solid var(--border-color);
 }
 
 h1 {
-  font-size: 48px; /* Figma: 48px */
+  font-size: 48px;
   margin-bottom: 12px;
 }
 
 h2 {
-  font-size: 20px; /* Figma: 20px */
+  font-size: 20px;
   font-weight: 300;
   color: #666;
 }
 
 .filters-panel {
-  background-color: #fafafa; /* Figma light grey */
+  background-color: #fafafa;
   padding: 24px;
   gap: 20px;
 }
@@ -539,7 +533,7 @@ h2 {
 
 .intro-panel .intro-text {
   max-width: 800px;
-  text-align: left; /* or center, if you prefer your copy centered */
+  text-align: left;
 }
 
 .search-container {
@@ -558,7 +552,6 @@ h2 {
 
 .search-container button {
   height: 40px;
-  border: 1px solid #d1d5db;
   border-left: none;
   border-radius: 0 6px 6px 0;
   padding: 0 16px;
@@ -567,20 +560,19 @@ h2 {
   cursor: pointer;
 }
 
-/* —— Centered intro + pinned search —— */
 .intro-panel {
   width: 100%;
   position: relative;
   display: flex;
-  justify-content: center; /* centers the intro-text block */
+  justify-content: center;
   align-items: center;
   margin: 30px 0;
   padding: 0 20px;
 }
 
 .intro-panel .intro-text {
-  max-width: 800px; /* constrain line-length */
-  text-align: center; /* center your copy */
+  max-width: 800px;
+  text-align: center;
 }
 
 .intro-panel .search-container {
@@ -592,7 +584,6 @@ h2 {
   align-items: center;
 }
 
-/* match your existing search styling */
 .search-container input {
   width: 180px;
   height: 40px;
@@ -603,7 +594,6 @@ h2 {
 
 .search-container button {
   height: 40px;
-  border: 1px solid #d1d5db;
   border-left: none;
   border-radius: 0 6px 6px 0;
   background: var(--primary-color);
@@ -611,7 +601,6 @@ h2 {
   padding: 0 16px;
 }
 
-/* --------------- */
 .viz-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 600px), 1fr));
@@ -636,11 +625,10 @@ h2 {
 #scatter-container {
   display: flex;
   gap: 20px;
-  /* align-items: flex-start;  or center, as you prefer */
 }
 
 #scatter-container > div {
-  flex: 1; /* makes each child take equal width */
+  flex: 1;
 }
 
 #viz5-container {
