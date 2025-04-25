@@ -582,4 +582,3 @@ export function drawSixHeatmaps(data, svgSize, margin, graphSize) {
     });
   });
 }
-

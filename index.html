@@ -1,174 +1,235 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="Description" content="Analyse des ouvertures aux échecs.">
-        <title>Explorez les secrets des ouvertures aux échecs</title>
 
-        <link rel="stylesheet" href="src/assets/style.css">
-        <link rel="stylesheet" href="src/assets/typography.css">
-      </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="Description" content="Analyse des ouvertures aux échecs." />
+  <title>Explorez les secrets des ouvertures aux échecs</title>
 
-      <body>
-        <header>
-          <h1>
-            Explorez les secrets des ouvertures aux échecs
-          </h1>
-          <h2>
-            Un tableau de bord interactif pour comprendre ce qui fait basculer une partie... dès le premier coup.
-          </h2>
-        </header>
-        
-        <main>
-          <section class="intro-panel">
-            <div class="intro-text">
-              <p>Tout commence par un premier coup... mais pas n'importe lequel.
-                <br>Selon votre niveau, votre tempo et votre stratégie, certaines ouvertures vous offrent un vrai bonus.
-                <br>Découvrez les ouvertures qui gagnent vraiment et pourquoi.
-              </p>
-              <p class="emphasized">Les données parlent. À vous de jouer.</p>
+  <link rel="stylesheet" href="src/assets/style.css" />
+  <link rel="stylesheet" href="src/assets/typography.css" />
+</head>
+
+<body>
+  <header>
+    <h1>Explorez les secrets des ouvertures aux échecs</h1>
+    <h2>
+      Un tableau de bord interactif pour comprendre ce qui fait basculer une
+      partie... dès le premier coup.
+    </h2>
+  </header>
+
+  <main>
+    <section class="stats-overview">
+      <div class="stat-card">
+        <p>Ouvertures selon niveau Elo</p>
+        <h4>
+          Ouvrez la partie avec les coups les plus efficaces pour votre niveau
+        </h4>
+      </div>
+
+      <div class="stat-card">
+        <p>Ouvertures adaptées au style de jeu</p>
+        <h4>Trouvez l’ouverture qui s’adapte le mieux à votre profil Elo</h4>
+      </div>
+
+      <div class="stat-card">
+        <p>Variantes populaires</p>
+        <h4>Découvrez les variantes les plus jouées, en un clin d’œil</h4>
+      </div>
+
+      <div class="stat-card">
+        <p>Ouvertures qui gagnent</p>
+        <h4>
+          Gagnez l’avantage dès le départ avec l’ouverture la plus rentable
+        </h4>
+      </div>
+
+      <div class="stat-card">
+        <p>Lien avec longueur de l’ouverture</p>
+        <h4>
+          Une ouverture plus longue mène-t-elle à un meilleur résultat ?
+        </h4>
+      </div>
+    </section>
+
+    <section class="filters-panel">
+      <div class="filter-container">
+        <div class="filter">
+          <label>Ouverture</label>
+          <div class="dropdown-multiselect">
+            <button id="dropdown-button">Choisir des ouvertures ▾</button>
+            <div id="dropdown-menu" class="dropdown-menu">
+              <label><input type="checkbox" value="all" id="select-all" checked />
+                Toutes</label>
+              <div id="checkbox-options"></div>
             </div>
-          </section>
-
-          <section class="filters-panel">
-            <div class="filter-container">
-              <div class="filter">
-                <label>Ouverture</label>
-                <div class="dropdown-multiselect">
-                  <button id="dropdown-button">Choisir des ouvertures ▾</button>
-                  <div id="dropdown-menu" class="dropdown-menu">
-                    <label><input type="checkbox" value="all" id="select-all" checked> Toutes</label>
-                    <div id="checkbox-options"></div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="filter">
-                <label>Classement ELO</label>
-                <div class="elo-select-container">
-                  <select id="elo-min"></select>
-                  <span>à</span>
-                  <select id="elo-max"></select>
-                </div>
-              </div>              
-              
-              <div class="filter">
-                <label>Couleur des pièces</label>
-                <div class="dropdown-multiselect" id="color-filter-wrapper">
-                  <button id="color-dropdown-button">Blanc et Noir ▾</button>
-                  <div id="color-dropdown-menu" class="dropdown-menu">
-                    <label><input type="checkbox" value="white" class="color-checkbox" checked> Blanc</label>
-                    <label><input type="checkbox" value="black" class="color-checkbox" checked> Noir</label>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="filter">
-                <label>Type de partie</label>
-                <div class="dropdown-multiselect" id="game-type-filter-wrapper">
-                  <button id="game-type-dropdown-button">Classée et Non classée ▾</button>
-                  <div id="game-type-dropdown-menu" class="dropdown-menu">
-                    <label><input type="checkbox" value="rated" class="game-type-checkbox" checked> Classée</label>
-                    <label><input type="checkbox" value="casual" class="game-type-checkbox" checked> Non classée</label>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="filter">
-                <label>Contrôle du temps</label>
-                <div class="dropdown-multiselect" id="time-control-filter-wrapper">
-                  <button id="time-control-dropdown-button">Blitz, Partie rapide, Partie longue ▾</button>
-                  <div id="time-control-dropdown-menu" class="dropdown-menu">
-                  </div>
-                </div>
-              </div>
-              
-              
-              <button id="filter-button" class="primary-button">Filtrer</button>
-            </div>
-            
-            <div class="search-container">
-              <input type="text" id="search-input" placeholder="Recherche">
-              <button id="search-button"><i class="search-icon"></i></button>
-            </div>
-          </section>
-
-          <div class="viz-grid">
-            <!-- Visualization 1: Heatmap -->
-            <section class="viz-card" id="viz1-container">
-              <h3>Popularité des ouvertures selon classement, cadence et type de partie</h3>
-              <p class="viz-description">Quels sont les débuts préférés des joueurs selon leur niveau Elo, la cadence de jeu et le type de partie ? Des tendances qui varient selon votre profil de joueur.</p>
-              
-              <div id="viz1-six-heatmaps" class="heatmap-grid-6"></div>
-            </section>
-            
-            <!-- Visualization 2: Stacked Bar Chart -->
-            <section class="viz-card" id="viz2-container">
-              <h3>Taux de victoire par ouverture selon la couleur</h3>
-              <p class="viz-description">Quelle couleur prend l'avantage selon l'ouverture jouée ? Certaines ouvertures favorisent clairement les noirs ou les blancs.</p>
-              
-              <div class="viz-controls">
-                <button id="toggle-victory-chart" class="secondary-button">Afficher les statistiques de l'état de la victoire</button>
-              </div>
-              
-              <div id="viz2">
-                <h4 id="viz2-chart-title" class="chart-title"></h4>
-                
-                <div class="viz2-container" id="viz2-stacked-bar-container">
-                  <div class="graph" id="viz2-stacked-bar"></div>
-                  <div id="viz2-legend-wrapper">
-                    <div class="legend-container" id="viz2-legend"></div>
-                    <div class="legend-container" id="viz2-victory-legend" style="display: none; opacity: 0;"></div>
-                  </div>  
-                </div>
-                
-                <div class="viz2-container" id="viz2-victory-status-container" style="display: none; opacity: 0;">
-                  <div class="graph" id="viz2-victory-status"></div>
-                </div>
-              </div>
-            </section>
-            
-            <!-- Visualization 3: Line Chart -->
-            <section class="viz-card" id="viz3-container">
-              <h3>Taux de victoire par ouverture selon le Elo</h3>
-              <p class="viz-description">Les ouvertures qui gagnent... selon votre niveau. Certaines ouvertures brillent chez les experts, d'autres chez les débutants.</p>
-              
-              <div id="viz3">
-                <h4 id="viz3-chart-title" class="chart-title"></h4>
-              </div>
-            </section>
-            
-            <!-- Visualization 4: Circle Packing -->
-            <section class="viz-card" id="viz4-container">
-              <h3>Variantes populaires des familles d'ouvertures</h3>
-              <p class="viz-description">Lignes les plus jouées dans chaque grande ouverture. Une ouverture, mille variantes. Voici les plus jouées.</p>
-              
-              <div id="viz4"></div>
-              <div id="viz4-pagination" class="pagination-container"></div>
-            </section>
-            
-            <!-- Visualization 5: Scatter Plot -->
-            <section class="viz-card" id="viz5-container">
-              <h3>Lien entre nombre de coups dans l'ouverture et performance</h3>
-              <p class="viz-description">La durée de l'ouverture influence t-elle vos chances de gagner ? Plus l'ouverture est longue, plus elle est rentable ? Pas si simple...</p>
-              
-              <div class="viz-controls">
-                <button id="viz5-toggle-x-axis" class="secondary-button">Afficher le nombre moyen de tours</button>
-              </div>
-              
-              <div id="viz5">
-                <h4 id="viz5-chart-title" class="chart-title"></h4>
-              </div>
-            </section>
           </div>
-        </main>
-        
-        <footer>
-          <p>Projet de session INF8808 | Équipe 4 & 43</p>
-        </footer>
-        
-        <script src="https://d3js.org/d3.v7.js"></script>
-        <script type="module" src="index.js"></script>
-      </body>
+        </div>
+
+        <div class="filter">
+          <label>Classement ELO</label>
+          <div class="elo-select-container">
+            <select id="elo-min"></select>
+            <span>à</span>
+            <select id="elo-max"></select>
+          </div>
+        </div>
+
+        <div class="filter">
+          <label>Couleur des pièces</label>
+          <div class="dropdown-multiselect" id="color-filter-wrapper">
+            <button id="color-dropdown-button">Blanc et Noir ▾</button>
+            <div id="color-dropdown-menu" class="dropdown-menu">
+              <label><input type="checkbox" value="white" class="color-checkbox" checked />
+                Blanc</label>
+              <label><input type="checkbox" value="black" class="color-checkbox" checked />
+                Noir</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter">
+          <label>Type de partie</label>
+          <div class="dropdown-multiselect" id="game-type-filter-wrapper">
+            <button id="game-type-dropdown-button">
+              Classée et Non classée ▾
+            </button>
+            <div id="game-type-dropdown-menu" class="dropdown-menu">
+              <label><input type="checkbox" value="rated" class="game-type-checkbox" checked />
+                Classée</label>
+              <label><input type="checkbox" value="casual" class="game-type-checkbox" checked />
+                Non classée</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter">
+          <label>Contrôle du temps</label>
+          <div class="dropdown-multiselect" id="time-control-filter-wrapper">
+            <button id="time-control-dropdown-button">
+              Blitz, Partie rapide, Partie longue ▾
+            </button>
+            <div id="time-control-dropdown-menu" class="dropdown-menu"></div>
+          </div>
+        </div>
+
+        <button id="filter-button" class="primary-button">Filtrer</button>
+      </div>
+    </section>
+
+    <section class="intro-panel">
+      <div class="intro-text">
+        <p>
+          Tout commence par un premier coup... mais pas n'importe lequel.
+          <br />Selon votre niveau, votre tempo et votre stratégie, certaines
+          ouvertures vous offrent un vrai bonus. <br />Découvrez les
+          ouvertures qui gagnent vraiment et pourquoi.
+        </p>
+        <p class="emphasized">Les données parlent. À vous de jouer.</p>
+      </div>
+
+      <div class="search-container">
+        <input type="text" id="search-input" placeholder="Recherche" />
+        <button id="search-button"><i class="search-icon"></i></button>
+      </div>
+    </section>
+
+    <div class="viz-grid">
+      <!-- Visualization 1: Heatmap -->
+      <section class="viz-card" id="viz1-container">
+        <h3>
+          Popularité des ouvertures selon classement, cadence et type de
+          partie
+        </h3>
+        <p class="viz-description">
+          Quels sont les débuts préférés des joueurs selon leur niveau Elo, la
+          cadence de jeu et le type de partie ? Des tendances qui varient
+          selon votre profil de joueur.
+        </p>
+
+        <div id="viz1-six-heatmaps" class="heatmap-grid-6"></div>
+      </section>
+
+      <!-- Visualization 2: Stacked Bar Charts -->
+      <section class="viz-card" id="viz2-container">
+        <h3>Taux de victoire par ouverture</h3>
+        <p class="viz-description">
+          Quelle couleur prend l'avantage selon l'ouverture jouée ? Et comment
+          se répartissent les états de victoire (échec et mat, abandon, etc.)
+          ?
+        </p>
+        <div id="stacked-charts" style="display: flex; gap: 40px">
+          <div class="chart-wrapper" style="flex: 1; display: flex; flex-direction: column;">
+            <h4 id="viz2-wins-chart-title" class="chart-title"></h4>
+            <div id="viz2-wins" style="flex-grow: 1;"></div>
+            <!-- Legend container will be added dynamically -->
+          </div>
+          <div class="chart-wrapper" style="flex: 1; display: flex; flex-direction: column;">
+            <h4  id="viz2-victory-chart-title" class="chart-title"></h4>
+            <div id="viz2-victory" style="flex-grow: 1;"></div>
+            <!-- Legend container will be added dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Visualization 3: Line Chart -->
+      <section class="viz-card" id="viz3-container">
+        <h3>Taux de victoire par ouverture selon le Elo</h3>
+        <p class="viz-description">
+          Les ouvertures qui gagnent... selon votre niveau. Certaines
+          ouvertures brillent chez les experts, d'autres chez les débutants.
+        </p>
+
+        <div id="viz3">
+          <h4 id="viz3-chart-title" class="chart-title"></h4>
+        </div>
+      </section>
+
+      <!-- Visualization 4: Circle Packing -->
+      <section class="viz-card" id="viz4-container">
+        <h3>Variantes populaires des familles d'ouvertures</h3>
+        <p class="viz-description">
+          Lignes les plus jouées dans chaque grande ouverture. Une ouverture,
+          mille variantes. Voici les plus jouées.
+        </p>
+
+        <div id="viz4"></div>
+        <div id="viz4-pagination" class="pagination-container"></div>
+      </section>
+
+      <!-- Visualization 5: Scatter Plot -->
+      <section class="viz-card" id="viz5-container">
+        <h3>Lien entre nombre de coups dans l'ouverture et performance</h3>
+        <p class="viz-description">
+          La durée de l'ouverture influence t-elle vos chances de gagner ?
+          Plus l'ouverture est longue, plus elle est rentable ? Pas si
+          simple...
+        </p>
+
+        <div id="scatter-container" style="display: flex; gap: 20px">
+          <!-- Ply plot -->
+          <div class="scatter-wrapper">
+            <h4 id="viz5-ply-chart-title" class="chart-title"></h4>
+            <div id="viz5-ply"></div>
+          </div>
+          <!-- Turns plot -->
+          <div class="scatter-wrapper">
+            <h4 id="viz5-turns-chart-title" class="chart-title"></h4>
+            <div id="viz5-turns"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Projet de session INF8808 | Équipe 4 & 43</p>
+  </footer>
+
+  <script src="https://d3js.org/d3.v7.js"></script>
+  <script type="module" src="index.js"></script>
+</body>
+
 </html>
